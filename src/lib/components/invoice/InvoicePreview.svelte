@@ -48,6 +48,101 @@
 
 	type Html2PdfFactory = () => Html2PdfWorker;
 
+	type PreviewCloneContext = {
+		container: HTMLDivElement;
+		clone: HTMLElement;
+	};
+
+	const COLOR_STYLE_PROPERTIES = [
+		'backgroundColor',
+		'borderBottomColor',
+		'borderColor',
+		'borderLeftColor',
+		'borderRightColor',
+		'borderTopColor',
+		'color',
+		'outlineColor',
+		'textDecorationColor'
+	] as const;
+
+	const MODERN_COLOR_FUNCTION_PATTERN = /(oklab|oklch|lab|lch)\(/i;
+
+	const parseColorToRgb = (value: string): string | null => {
+		if (typeof window === 'undefined') return null;
+
+		const tester = document.createElement('span');
+		tester.style.color = '';
+		tester.style.color = value;
+
+		if (!tester.style.color) {
+			return null;
+		}
+
+		tester.style.position = 'absolute';
+		tester.style.opacity = '0';
+		tester.style.pointerEvents = 'none';
+		document.body.appendChild(tester);
+
+		const resolvedColor = getComputedStyle(tester).color;
+		tester.remove();
+
+		return resolvedColor || null;
+	};
+
+	const sanitizeCloneColors = (sourceElement: HTMLElement, clonedElement: HTMLElement) => {
+		const sourceNodes = [sourceElement, ...sourceElement.querySelectorAll<HTMLElement>('*')];
+		const clonedNodes = [clonedElement, ...clonedElement.querySelectorAll<HTMLElement>('*')];
+
+		for (const [index, sourceNode] of sourceNodes.entries()) {
+			const clonedNode = clonedNodes[index];
+
+			if (!clonedNode) continue;
+
+			const computedStyle = getComputedStyle(sourceNode);
+
+			for (const propertyName of COLOR_STYLE_PROPERTIES) {
+				const styleValue = computedStyle[propertyName];
+
+				if (!styleValue || !MODERN_COLOR_FUNCTION_PATTERN.test(styleValue)) continue;
+
+				const fallbackColor = parseColorToRgb(styleValue);
+
+				if (fallbackColor) {
+					clonedNode.style[propertyName] = fallbackColor;
+				}
+			}
+		}
+	};
+
+	const createPdfPreviewClone = (sourceElement: HTMLElement): PreviewCloneContext => {
+		const container = document.createElement('div');
+		const clone = sourceElement.cloneNode(true);
+
+		if (!(clone instanceof HTMLElement)) {
+			throw new Error('Gagal menyiapkan salinan invoice untuk PDF.');
+		}
+
+		container.setAttribute('aria-hidden', 'true');
+		container.style.position = 'fixed';
+		container.style.left = '-99999px';
+		container.style.top = '0';
+		container.style.pointerEvents = 'none';
+		container.style.opacity = '0';
+		container.style.width = `${sourceElement.offsetWidth}px`;
+		container.style.zIndex = '-1';
+
+		clone.style.width = `${sourceElement.offsetWidth}px`;
+		clone.style.maxWidth = 'none';
+		clone.style.margin = '0';
+
+		container.appendChild(clone);
+		document.body.appendChild(container);
+
+		sanitizeCloneColors(sourceElement, clone);
+
+		return { container, clone };
+	};
+
 	const sanitizeFilePart = (value: string) =>
 		value
 			.toLowerCase()
@@ -74,7 +169,7 @@
 	};
 
 	const handleDownloadPdf = async () => {
-		if (!previewElement || isDownloading) return;
+		if (typeof window === 'undefined' || !previewElement || isDownloading) return;
 
 		downloadError = null;
 		downloadStatus = 'Menyiapkan PDF...';
@@ -85,28 +180,33 @@
 			const html2pdf = resolveHtml2PdfFactory(html2pdfModule);
 			const safeInvoiceNumber = sanitizeFilePart(form.invoiceNumber || 'invoice');
 			const safeClientName = sanitizeFilePart(form.clientName || 'klien');
+			const { container, clone } = createPdfPreviewClone(previewElement);
 
 			downloadStatus = 'Mengunduh PDF...';
 
-			await html2pdf()
-				.set({
-					margin: [12, 12, 12, 12],
-					filename: `${safeInvoiceNumber}-${safeClientName}.pdf`,
-					image: { type: 'jpeg', quality: 0.98 },
-					enableLinks: false,
-					html2canvas: {
-						scale: 2,
-						useCORS: true,
-						backgroundColor: '#f8fafc'
-					},
-					jsPDF: {
-						unit: 'mm',
-						format: 'a4',
-						orientation: 'portrait'
-					}
-				})
-				.from(previewElement)
-				.save();
+			try {
+				await html2pdf()
+					.set({
+						margin: [12, 12, 12, 12],
+						filename: `${safeInvoiceNumber}-${safeClientName}.pdf`,
+						image: { type: 'jpeg', quality: 0.98 },
+						enableLinks: false,
+						html2canvas: {
+							scale: 2,
+							useCORS: true,
+							backgroundColor: '#f8fafc'
+						},
+						jsPDF: {
+							unit: 'mm',
+							format: 'a4',
+							orientation: 'portrait'
+						}
+					})
+					.from(clone)
+					.save();
+			} finally {
+				container.remove();
+			}
 
 			downloadStatus = 'PDF berhasil diunduh.';
 		} catch (error) {
