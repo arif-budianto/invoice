@@ -45,7 +45,7 @@
 				type="button"
 				onclick={handleDownloadPdf}
 				disabled={isDownloading}
-				class="inline-flex w-full items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+				class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
 			>
 				{isDownloading ? 'Membuka print...' : 'Download PDF'}
 			</button>
