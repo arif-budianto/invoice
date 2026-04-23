@@ -46,3 +46,19 @@ select.field {
 .button-icon {
 	@apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/4 text-xl text-slate-300 transition hover:border-rose-400/40 hover:bg-rose-400/10 hover:text-white;
 }
+
+.date-field-wrapper {
+	@apply relative;
+}
+
+.date-field {
+	@apply pr-12;
+}
+
+.date-field::-webkit-calendar-picker-indicator {
+	@apply absolute right-4 h-5 w-5 cursor-pointer opacity-0;
+}
+
+.date-field-icon {
+	@apply pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-slate-400;
+}

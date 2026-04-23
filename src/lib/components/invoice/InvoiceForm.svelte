@@ -1,4 +1,5 @@
 <script lang="ts">
+	import calendarIcon from '$lib/assets/calendar-icon.svg';
 	import type { InvoiceFormData, InvoiceItem } from '$lib/types/invoice';
 
 	type Props = {
@@ -79,11 +80,17 @@
 		</label>
 		<label class="space-y-2">
 			<span class="text-sm font-medium text-slate-200">Tanggal terbit</span>
-			<input bind:value={form.issueDate} class="field" type="date" />
+			<div class="date-field-wrapper">
+				<input bind:value={form.issueDate} class="field date-field" type="date" />
+				<img alt="" aria-hidden="true" class="date-field-icon" src={calendarIcon} />
+			</div>
 		</label>
 		<label class="space-y-2">
 			<span class="text-sm font-medium text-slate-200">Jatuh tempo</span>
-			<input bind:value={form.dueDate} class="field" type="date" />
+			<div class="date-field-wrapper">
+				<input bind:value={form.dueDate} class="field date-field" type="date" />
+				<img alt="" aria-hidden="true" class="date-field-icon" src={calendarIcon} />
+			</div>
 		</label>
 	</div>
 
