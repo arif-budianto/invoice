@@ -17,6 +17,36 @@
 
 	let previewElement = $state<HTMLElement | null>(null);
 	let isDownloading = $state(false);
+	let downloadError = $state<string | null>(null);
+	let downloadStatus = $state<string | null>(null);
+
+	type Html2PdfOptions = {
+		margin?: number | [number, number] | [number, number, number, number];
+		filename?: string;
+		image?: {
+			type?: 'jpeg' | 'png' | 'webp';
+			quality?: number;
+		};
+		enableLinks?: boolean;
+		html2canvas?: {
+			scale?: number;
+			useCORS?: boolean;
+			backgroundColor?: string;
+		};
+		jsPDF?: {
+			unit?: string;
+			format?: string | [number, number];
+			orientation?: 'portrait' | 'landscape';
+		};
+	};
+
+	type Html2PdfWorker = {
+		set: (options: Html2PdfOptions) => Html2PdfWorker;
+		from: (source: HTMLElement) => Html2PdfWorker;
+		save: () => Promise<void>;
+	};
+
+	type Html2PdfFactory = () => Html2PdfWorker;
 
 	const sanitizeFilePart = (value: string) =>
 		value
@@ -25,15 +55,38 @@
 			.replace(/[^a-z0-9]+/g, '-')
 			.replace(/^-+|-+$/g, '');
 
+	const resolveHtml2PdfFactory = (module: unknown): Html2PdfFactory => {
+		const candidateList = [
+			module,
+			(module as { default?: unknown } | null)?.default,
+			(module as { html2pdf?: unknown } | null)?.html2pdf,
+			(module as { default?: { default?: unknown; html2pdf?: unknown } } | null)?.default?.default,
+			(module as { default?: { html2pdf?: unknown } } | null)?.default?.html2pdf
+		];
+
+		for (const candidate of candidateList) {
+			if (typeof candidate === 'function') {
+				return candidate as Html2PdfFactory;
+			}
+		}
+
+		throw new Error('Modul html2pdf.js tidak mengembalikan factory yang bisa dipanggil.');
+	};
+
 	const handleDownloadPdf = async () => {
 		if (!previewElement || isDownloading) return;
 
+		downloadError = null;
+		downloadStatus = 'Menyiapkan PDF...';
 		isDownloading = true;
 
 		try {
-			const { default: html2pdf } = await import('html2pdf.js');
+			const html2pdfModule = await import('html2pdf.js');
+			const html2pdf = resolveHtml2PdfFactory(html2pdfModule);
 			const safeInvoiceNumber = sanitizeFilePart(form.invoiceNumber || 'invoice');
 			const safeClientName = sanitizeFilePart(form.clientName || 'klien');
+
+			downloadStatus = 'Mengunduh PDF...';
 
 			await html2pdf()
 				.set({
@@ -54,6 +107,15 @@
 				})
 				.from(previewElement)
 				.save();
+
+			downloadStatus = 'PDF berhasil diunduh.';
+		} catch (error) {
+			console.error('Gagal mengunduh PDF invoice:', error);
+			downloadError =
+				error instanceof Error && error.message
+					? `Gagal mengunduh PDF: ${error.message}`
+					: 'Gagal mengunduh PDF. Silakan coba lagi.';
+			downloadStatus = null;
 		} finally {
 			isDownloading = false;
 		}
@@ -61,15 +123,25 @@
 </script>
 
 <section class="space-y-4 lg:sticky lg:top-6">
-	<div class="flex items-center justify-end">
-		<button
-			type="button"
-			onclick={handleDownloadPdf}
-			disabled={isDownloading}
-			class="inline-flex w-full items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-		>
-			{isDownloading ? 'Menyiapkan PDF...' : 'Download PDF'}
-		</button>
+	<div class="space-y-2">
+		<div class="flex items-center justify-end">
+			<button
+				type="button"
+				onclick={handleDownloadPdf}
+				disabled={isDownloading}
+				class="inline-flex w-full items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+			>
+				{isDownloading ? 'Menyiapkan PDF...' : 'Download PDF'}
+			</button>
+		</div>
+
+		{#if downloadStatus}
+			<p class="text-right text-sm text-slate-300">{downloadStatus}</p>
+		{/if}
+
+		{#if downloadError}
+			<p class="text-right text-sm text-red-300">{downloadError}</p>
+		{/if}
 	</div>
 
 	<section
