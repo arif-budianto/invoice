@@ -79,3 +79,68 @@ textarea {
 .date-field-icon {
 	@apply pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-slate-400;
 }
+
+@media print {
+	:root {
+		color-scheme: light;
+		background-color: #ffffff;
+	}
+
+	html,
+	body {
+		min-height: auto;
+		background: #ffffff !important;
+		color: #0f172a !important;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	body * {
+		visibility: hidden;
+	}
+
+	.titlebar,
+	.titlebar * {
+		display: none !important;
+	}
+
+	.invoice-preview-section,
+	.invoice-preview-section *,
+	.invoice-preview-document,
+	.invoice-preview-document * {
+		visibility: visible;
+	}
+
+	.invoice-preview-section {
+		position: static !important;
+		top: auto !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	.invoice-preview-controls {
+		display: none !important;
+	}
+
+	.invoice-preview-document {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 24px !important;
+		border: 0 !important;
+		border-radius: 0 !important;
+		background: #f8fafc !important;
+		box-shadow: none !important;
+		color: #0f172a !important;
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	@page {
+		size: A4;
+		margin: 12mm;
+	}
+}
