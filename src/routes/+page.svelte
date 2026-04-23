@@ -83,10 +83,10 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_28%),linear-gradient(180deg,_#020617_0%,_#020817_42%,_#020617_100%)]"
+	class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_28%),linear-gradient(180deg,#020617_0%,#020817_42%,#020617_100%)]"
 >
 	<div
-		class="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-6 px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-8"
+		class="mx-auto flex min-h-screen max-w-400 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-8"
 	>
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)] xl:gap-8">
 			<div class="space-y-6">
