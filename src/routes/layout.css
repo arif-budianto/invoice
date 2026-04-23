@@ -35,8 +35,25 @@ textarea {
 	@apply w-full rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-sm text-slate-100 transition outline-none placeholder:text-slate-500 focus:border-cyan-400/70 focus:bg-slate-950 focus:ring-4 focus:ring-cyan-400/10;
 }
 
-select.field {
-	@apply pr-12;
+.select-field-wrapper {
+	@apply relative;
+}
+
+.select-field {
+	@apply appearance-none pr-12;
+}
+
+.select-field::-ms-expand {
+	display: none;
+}
+
+.select-field::-webkit-contacts-auto-fill-button,
+.select-field::-webkit-credentials-auto-fill-button {
+	display: none !important;
+}
+
+.select-field-icon {
+	@apply pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2;
 }
 
 .button-secondary {
