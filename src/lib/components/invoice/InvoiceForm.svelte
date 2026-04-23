@@ -128,7 +128,7 @@
 
 		<div class="overflow-hidden rounded-3xl border border-white/10">
 			<div
-				class="hidden grid-cols-[minmax(0,1.8fr)_0.8fr_1fr_56px] gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase sm:grid"
+				class="hidden grid-cols-[minmax(0,1.8fr)_0.8fr_1fr_56px] gap-3 border-b border-white/10 bg-white/3 px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase sm:grid"
 			>
 				<span>Deskripsi</span>
 				<span>Qty</span>
