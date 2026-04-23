@@ -73,7 +73,7 @@
 			>
 				<div class="space-y-3">
 					<div
-						class="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-cyan-700 uppercase"
+						class="invoice-preview-badge inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-cyan-700 uppercase"
 					>
 						Invoice preview
 					</div>
