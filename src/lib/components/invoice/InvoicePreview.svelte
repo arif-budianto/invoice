@@ -1,5 +1,4 @@
 <script lang="ts">
-	import html2pdf from 'html2pdf.js';
 	import type { InvoiceFormData, InvoiceItem } from '$lib/types/invoice';
 
 	type Props = {
@@ -32,6 +31,7 @@
 		isDownloading = true;
 
 		try {
+			const { default: html2pdf } = await import('html2pdf.js');
 			const safeInvoiceNumber = sanitizeFilePart(form.invoiceNumber || 'invoice');
 			const safeClientName = sanitizeFilePart(form.clientName || 'klien');
 
