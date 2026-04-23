@@ -17,25 +17,21 @@
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
-	let downloadStatus = $state<string | null>(null);
 
 	const handleDownloadPdf = async () => {
 		if (typeof window === 'undefined' || isDownloading) return;
 
 		downloadError = null;
-		downloadStatus = 'Membuka dialog print...';
 		isDownloading = true;
 
 		try {
 			window.print();
-			downloadStatus = 'Pilih Save as PDF dari dialog print browser.';
 		} catch (error) {
 			console.error('Gagal membuka dialog print invoice:', error);
 			downloadError =
 				error instanceof Error && error.message
 					? `Gagal membuka dialog print: ${error.message}`
 					: 'Gagal membuka dialog print. Silakan coba lagi.';
-			downloadStatus = null;
 		} finally {
 			isDownloading = false;
 		}
@@ -54,10 +50,6 @@
 				{isDownloading ? 'Membuka print...' : 'Download PDF'}
 			</button>
 		</div>
-
-		{#if downloadStatus}
-			<p class="text-right text-sm text-slate-300">{downloadStatus}</p>
-		{/if}
 
 		{#if downloadError}
 			<p class="text-right text-sm text-red-300">{downloadError}</p>
