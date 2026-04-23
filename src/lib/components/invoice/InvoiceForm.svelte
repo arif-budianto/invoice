@@ -9,6 +9,44 @@
 	};
 
 	let { form, items, onAddItem, onRemoveItem }: Props = $props();
+
+	const priceFormatter = new Intl.NumberFormat('id-ID');
+	let priceDrafts = $state<Record<number, string>>({});
+	let focusedPriceInputs = $state<Record<number, boolean>>({});
+
+	function formatPrice(value: number) {
+		if (!Number.isFinite(value) || value <= 0) {
+			return '';
+		}
+
+		return priceFormatter.format(value);
+	}
+
+	function getPriceInputValue(item: InvoiceItem) {
+		if (focusedPriceInputs[item.id]) {
+			return priceDrafts[item.id] ?? (item.unitPrice > 0 ? String(item.unitPrice) : '');
+		}
+
+		return priceDrafts[item.id] ?? formatPrice(item.unitPrice);
+	}
+
+	function handlePriceFocus(item: InvoiceItem) {
+		focusedPriceInputs[item.id] = true;
+		priceDrafts[item.id] = item.unitPrice > 0 ? String(item.unitPrice) : '';
+	}
+
+	function handlePriceInput(item: InvoiceItem, event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const rawValue = input.value.replace(/\D/g, '');
+
+		priceDrafts[item.id] = rawValue;
+		item.unitPrice = rawValue ? Number(rawValue) : 0;
+	}
+
+	function handlePriceBlur(item: InvoiceItem) {
+		focusedPriceInputs[item.id] = false;
+		priceDrafts[item.id] = formatPrice(item.unitPrice);
+	}
 </script>
 
 <section
@@ -146,7 +184,16 @@
 							placeholder="UI design, development, konsultasi"
 						/>
 						<input bind:value={item.quantity} class="field" min="1" type="number" />
-						<input bind:value={item.unitPrice} class="field" min="0" step="1000" type="number" />
+						<input
+							class="field"
+							inputmode="numeric"
+							placeholder="4.500.000"
+							type="text"
+							value={getPriceInputValue(item)}
+							onblur={() => handlePriceBlur(item)}
+							onfocus={() => handlePriceFocus(item)}
+							oninput={(event) => handlePriceInput(item, event)}
+						/>
 						<button
 							aria-label="Hapus item"
 							class="button-icon"
