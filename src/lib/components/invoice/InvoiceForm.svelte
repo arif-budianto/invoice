@@ -161,17 +161,15 @@
 	</div>
 
 	<div class="space-y-4">
-		<div class="flex items-center justify-between gap-4">
-			<div class="space-y-1">
-				<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">
-					Item tagihan
-				</h2>
-				<p class="text-sm text-slate-500">Tambahkan layanan atau produk seperlunya.</p>
-			</div>
-			<button class="button-secondary" type="button" onclick={onAddItem}>Tambah item</button>
+		<div class="space-y-1">
+			<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Item tagihan</h2>
+			<p class="text-sm text-slate-500">Tambahkan layanan atau produk seperlunya.</p>
 		</div>
 
-		<div class="overflow-hidden rounded-3xl border border-white/10">
+		<div
+			class="space-y-3 sm:space-y-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-white/10"
+		>
+			<!-- Desktop header -->
 			<div
 				class="hidden grid-cols-[minmax(0,1.8fr)_0.8fr_1fr_56px] gap-3 border-b border-white/10 bg-white/3 px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase sm:grid"
 			>
@@ -180,10 +178,49 @@
 				<span>Harga</span>
 				<span></span>
 			</div>
-			<div class="divide-y divide-white/10">
+			<div class="space-y-3 sm:space-y-0 sm:divide-y sm:divide-white/10">
 				{#each items as item (item.id)}
+					<!-- Mobile: card layout -->
+					<div class="space-y-3 rounded-2xl border border-white/10 bg-white/3 p-4 sm:hidden">
+						<label class="space-y-2">
+							<span class="text-xs font-medium text-slate-400">Deskripsi</span>
+							<input
+								bind:value={item.description}
+								class="field"
+								placeholder="UI design, development, konsultasi"
+							/>
+						</label>
+						<div class="grid grid-cols-2 gap-3">
+							<label class="space-y-2">
+								<span class="text-xs font-medium text-slate-400">Qty</span>
+								<input bind:value={item.quantity} class="field" min="1" type="number" />
+							</label>
+							<label class="space-y-2">
+								<span class="text-xs font-medium text-slate-400">Harga</span>
+								<input
+									class="field"
+									inputmode="numeric"
+									placeholder="4.500.000"
+									type="text"
+									value={getPriceInputValue(item)}
+									onblur={() => handlePriceBlur(item)}
+									onfocus={() => handlePriceFocus(item)}
+									oninput={(event) => handlePriceInput(item, event)}
+								/>
+							</label>
+						</div>
+						<button
+							aria-label="Hapus item"
+							class="button-secondary w-full justify-center text-rose-300 hover:border-rose-400/40 hover:bg-rose-400/10"
+							type="button"
+							onclick={() => onRemoveItem(item.id)}
+						>
+							Hapus item
+						</button>
+					</div>
+					<!-- Desktop: grid layout -->
 					<div
-						class="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1.8fr)_0.8fr_1fr_56px] sm:items-center"
+						class="hidden grid-cols-[minmax(0,1.8fr)_0.8fr_1fr_56px] gap-3 px-4 py-4 sm:grid sm:items-center"
 					>
 						<input
 							bind:value={item.description}
@@ -213,6 +250,14 @@
 				{/each}
 			</div>
 		</div>
+
+		<button
+			class="button-secondary w-full justify-center sm:w-auto"
+			type="button"
+			onclick={onAddItem}
+		>
+			Tambah item
+		</button>
 	</div>
 
 	<label class="space-y-2">

@@ -80,19 +80,55 @@
 			</div>
 		</div>
 
-		<div class="overflow-hidden rounded-3xl border border-slate-200">
+		<div
+			class="space-y-3 sm:space-y-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200"
+		>
 			<div
-				class="grid grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase"
+				class="hidden grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase sm:grid"
 			>
 				<span>Deskripsi</span>
 				<span>Qty</span>
 				<span>Harga</span>
 				<span class="text-right">Jumlah</span>
 			</div>
-			<div class="divide-y divide-slate-200 bg-white">
+			<div class="space-y-3 sm:space-y-0 sm:divide-y sm:divide-slate-200 sm:bg-white">
 				{#each items as item (item.id)}
+					<div class="rounded-2xl border border-slate-200 bg-white p-4 sm:hidden">
+						<div class="space-y-3 text-sm text-slate-600">
+							<div class="space-y-1">
+								<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+									Deskripsi
+								</p>
+								<p class="font-medium text-slate-900">{item.description || 'Item pekerjaan'}</p>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-1">
+									<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+										Qty
+									</p>
+									<p class="font-medium text-slate-900">{item.quantity}</p>
+								</div>
+								<div class="space-y-1">
+									<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+										Harga
+									</p>
+									<p class="font-medium text-slate-900">{formatCurrency(item.unitPrice)}</p>
+								</div>
+							</div>
+							<div class="border-t border-slate-200 pt-3">
+								<div class="flex items-center justify-between gap-3">
+									<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+										Jumlah
+									</p>
+									<p class="font-semibold text-slate-900">
+										{formatCurrency(item.quantity * item.unitPrice)}
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
 					<div
-						class="grid grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 px-4 py-4 text-sm text-slate-600"
+						class="hidden grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 px-4 py-4 text-sm text-slate-600 sm:grid"
 					>
 						<div>
 							<p class="font-medium text-slate-900">{item.description || 'Item pekerjaan'}</p>
