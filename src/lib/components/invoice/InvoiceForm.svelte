@@ -1,5 +1,6 @@
 <script lang="ts">
 	import calendarIcon from '$lib/assets/calendar-icon.svg';
+	import chevronDownIcon from '$lib/assets/chevron-down-icon.svg';
 	import type { InvoiceFormData, InvoiceItem } from '$lib/types/invoice';
 
 	type Props = {
@@ -72,11 +73,14 @@
 		</label>
 		<label class="space-y-2">
 			<span class="text-sm font-medium text-slate-200">Mata uang</span>
-			<select bind:value={form.currency} class="field">
-				<option value="IDR">IDR</option>
-				<option value="USD">USD</option>
-				<option value="SGD">SGD</option>
-			</select>
+			<div class="select-field-wrapper">
+				<select bind:value={form.currency} class="field select-field">
+					<option value="IDR">IDR</option>
+					<option value="USD">USD</option>
+					<option value="SGD">SGD</option>
+				</select>
+				<img alt="" aria-hidden="true" class="select-field-icon" src={chevronDownIcon} />
+			</div>
 		</label>
 		<label class="space-y-2">
 			<span class="text-sm font-medium text-slate-200">Tanggal terbit</span>
