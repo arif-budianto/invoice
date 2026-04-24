@@ -44,7 +44,7 @@ A modern web-based invoice builder with live invoice preview, print or save as P
    cp .env.example .env
    ```
 
-4. Isi `DATABASE_URL` di `.env` sesuai koneksi PostgreSQL Abang.
+4. Isi `DATABASE_URL` di `.env` sesuai koneksi PostgreSQL Anda.
 5. Jalankan development server:
 
    ```bash
