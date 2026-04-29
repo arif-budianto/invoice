@@ -57,12 +57,19 @@
 			maximumFractionDigits: form.currency === 'IDR' ? 0 : 2
 		}).format(value);
 
-	const formatDate = (value: string) =>
-		new Intl.DateTimeFormat('id-ID', {
+	const formatDate = (value: string) => {
+		const date = new Date(value);
+
+		if (!value || Number.isNaN(date.getTime())) {
+			return 'Tanggal belum diisi';
+		}
+
+		return new Intl.DateTimeFormat('id-ID', {
 			day: '2-digit',
 			month: 'long',
 			year: 'numeric'
-		}).format(new Date(value));
+		}).format(date);
+	};
 
 	const addItem = () => {
 		items = [...items, createInvoiceItem(nextItemId++)];
