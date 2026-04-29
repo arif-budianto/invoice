@@ -102,7 +102,7 @@
 		<div class="space-y-4">
 			<div class="space-y-1">
 				<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Pengirim</h2>
-				<p class="text-sm text-slate-500">Informasi bisnis atau freelancer.</p>
+				<p class="text-sm text-slate-500">Informasi bisnis atau freelancer..</p>
 			</div>
 			<div class="grid gap-4">
 				<label class="space-y-2">
