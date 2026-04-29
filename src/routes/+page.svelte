@@ -21,6 +21,15 @@
 	const dueDateValue = new Date(now + DAY_IN_MS * 14);
 
 	const formatDateInput = (value: Date) => value.toISOString().slice(0, 10);
+	const clampNumber = (value: number, min: number, max: number) => {
+		if (!Number.isFinite(value)) return min;
+		return Math.min(Math.max(value, min), max);
+	};
+	const normalizeQuantity = (value: number) =>
+		Math.max(1, Math.floor(clampNumber(value, 1, 999999)));
+	const normalizeAmount = (value: number) =>
+		Math.max(0, clampNumber(value, 0, Number.MAX_SAFE_INTEGER));
+	const normalizeTaxRate = (value: number) => clampNumber(value, 0, 100);
 
 	let nextItemId = 3;
 	let taxRate = $state(11);
@@ -46,9 +55,19 @@
 		createInvoiceItem(2, 'Frontend development', 1, 8500000)
 	]);
 
-	const subtotal = $derived(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0));
-	const taxAmount = $derived(Math.round(subtotal * (taxRate / 100)));
+	const validatedTaxRate = $derived(normalizeTaxRate(taxRate));
+	const subtotal = $derived(
+		items.reduce(
+			(sum, item) => sum + normalizeQuantity(item.quantity) * normalizeAmount(item.unitPrice),
+			0
+		)
+	);
+	const taxAmount = $derived(Math.round(subtotal * (validatedTaxRate / 100)));
 	const total = $derived(subtotal + taxAmount);
+
+	const handleTaxBlur = () => {
+		taxRate = validatedTaxRate;
+	};
 
 	const formatCurrency = (value: number) =>
 		new Intl.NumberFormat('id-ID', {
@@ -106,7 +125,14 @@
 					</div>
 					<label class="space-y-2 sm:min-w-40">
 						<span class="text-sm font-medium text-slate-200">Pajak (%)</span>
-						<input bind:value={taxRate} class="field" min="0" max="100" type="number" />
+						<input
+							bind:value={taxRate}
+							class="field"
+							min="0"
+							max="100"
+							type="number"
+							onblur={handleTaxBlur}
+						/>
 					</label>
 				</section>
 			</div>
@@ -115,7 +141,7 @@
 				{form}
 				{items}
 				{subtotal}
-				{taxRate}
+				taxRate={validatedTaxRate}
 				{taxAmount}
 				{total}
 				{formatCurrency}
