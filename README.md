@@ -21,8 +21,6 @@ The app keeps the editing experience dark, compact, and easy to scan, while the 
 - TypeScript
 - Tailwind CSS 4
 - Vite
-- Drizzle ORM
-- PostgreSQL
 
 ## Getting Started
 
@@ -30,7 +28,6 @@ The app keeps the editing experience dark, compact, and easy to scan, while the 
 
 - Node.js
 - pnpm
-- PostgreSQL database connection string
 
 ### Installation
 
@@ -39,14 +36,6 @@ Clone the repository and install dependencies:
 ```bash
 pnpm install
 ```
-
-Create a local environment file:
-
-```bash
-cp .env.example .env
-```
-
-Set `DATABASE_URL` in `.env` to a valid PostgreSQL connection string.
 
 Start the development server:
 
@@ -58,19 +47,15 @@ Open the local URL printed by Vite in the terminal.
 
 ## Available Scripts
 
-| Script             | Description                                  |
-| ------------------ | -------------------------------------------- |
-| `pnpm dev`         | Start the Vite development server            |
-| `pnpm build`       | Build the app for production                 |
-| `pnpm preview`     | Preview the production build                 |
-| `pnpm check`       | Run SvelteKit sync and Svelte type checking  |
-| `pnpm check:watch` | Run Svelte type checking in watch mode       |
-| `pnpm lint`        | Run Prettier check and ESLint                |
-| `pnpm format`      | Format the project with Prettier             |
-| `pnpm db:push`     | Push the Drizzle schema to the configured DB |
-| `pnpm db:generate` | Generate Drizzle migration files             |
-| `pnpm db:migrate`  | Run Drizzle migrations                       |
-| `pnpm db:studio`   | Open Drizzle Studio                          |
+| Script             | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `pnpm dev`         | Start the Vite development server           |
+| `pnpm build`       | Build the app for production                |
+| `pnpm preview`     | Preview the production build                |
+| `pnpm check`       | Run SvelteKit sync and Svelte type checking |
+| `pnpm check:watch` | Run Svelte type checking in watch mode      |
+| `pnpm lint`        | Run Prettier check and ESLint               |
+| `pnpm format`      | Format the project with Prettier            |
 
 ## Project Structure
 
@@ -85,7 +70,6 @@ src/
 │   ├── components/invoice/
 │   │   ├── InvoiceForm.svelte    # Invoice input form
 │   │   └── InvoicePreview.svelte # Printable invoice preview
-│   ├── server/db/                # Drizzle database setup
 │   └── types/invoice.ts          # Invoice data types
 └── app.html                      # SvelteKit HTML template
 ```
