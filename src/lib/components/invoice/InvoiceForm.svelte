@@ -45,6 +45,16 @@
 		item.unitPrice = rawValue ? Number(rawValue) : 0;
 	}
 
+	function handleQuantityBlur(item: InvoiceItem, event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const quantity = Number(input.value);
+		const normalizedQuantity =
+			Number.isFinite(quantity) && quantity >= 1 ? Math.floor(quantity) : 1;
+
+		item.quantity = normalizedQuantity;
+		input.value = String(normalizedQuantity);
+	}
+
 	function handlePriceBlur(item: InvoiceItem) {
 		focusedPriceInputs[item.id] = false;
 		priceDrafts[item.id] = formatPrice(item.unitPrice);
@@ -197,7 +207,13 @@
 						<div class="grid grid-cols-2 gap-3">
 							<label class="space-y-2">
 								<span class="text-xs font-medium text-slate-400">Qty</span>
-								<input bind:value={item.quantity} class="field" min="1" type="number" />
+								<input
+									bind:value={item.quantity}
+									class="field"
+									min="1"
+									type="number"
+									onblur={(event) => handleQuantityBlur(item, event)}
+								/>
 							</label>
 							<label class="space-y-2">
 								<span class="text-xs font-medium text-slate-400">Harga</span>
@@ -231,7 +247,13 @@
 							class="field"
 							placeholder="UI design, development, konsultasi"
 						/>
-						<input bind:value={item.quantity} class="field" min="1" type="number" />
+						<input
+							bind:value={item.quantity}
+							class="field"
+							min="1"
+							type="number"
+							onblur={(event) => handleQuantityBlur(item, event)}
+						/>
 						<input
 							class="field"
 							inputmode="numeric"
