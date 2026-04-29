@@ -1,15 +1,18 @@
 # Invoice Builder
 
-A modern web-based invoice builder with live invoice preview, print or save as PDF support through the browser, dark mode, and a mobile-friendly interface.
+Invoice Builder is a focused web app for creating clean, professional invoices with a live preview. It is designed for simple operational use: fill in the business, client, date, currency, and line-item details, then print or save the final invoice as a PDF through the browser's native print flow.
 
-## Fitur Utama
+The app keeps the editing experience dark, compact, and easy to scan, while the invoice document itself is rendered on a light surface so it remains suitable for printing and sharing.
 
-- Form invoice interaktif untuk data bisnis, klien, tanggal, mata uang, dan catatan
-- Preview invoice langsung saat data diubah
-- Perhitungan subtotal, pajak, dan total secara otomatis
-- Daftar item invoice dinamis dengan tambah dan hapus item
-- Tampilan dark mode sebagai default dengan layout responsif untuk mobile dan desktop
-- Siap dicetak atau disimpan sebagai PDF menggunakan fitur print browser
+## Highlights
+
+- Live invoice preview that updates as the form changes
+- Business and client detail fields for practical invoice use cases
+- Dynamic invoice items with quantity, unit price, subtotal, tax, and total calculation
+- Currency selection for IDR, USD, and SGD
+- Native browser print flow for printing or saving the invoice as PDF
+- Mobile-friendly builder layout with a readable preview structure
+- Dark-mode workspace with a clean printable invoice document
 
 ## Tech Stack
 
@@ -17,79 +20,80 @@ A modern web-based invoice builder with live invoice preview, print or save as P
 - Svelte 5
 - TypeScript
 - Tailwind CSS 4
+- Vite
 - Drizzle ORM
 - PostgreSQL
-- Vite
 
-## Instalasi dan Menjalankan Lokal
+## Getting Started
 
-### Prasyarat
+### Prerequisites
 
 - Node.js
 - pnpm
-- PostgreSQL
+- PostgreSQL database connection string
 
-### Langkah Setup
+### Installation
 
-1. Clone repository ini.
-2. Install dependency:
+Clone the repository and install dependencies:
 
-   ```bash
-   pnpm install
-   ```
+```bash
+pnpm install
+```
 
-3. Salin file environment:
+Create a local environment file:
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
-4. Isi `DATABASE_URL` di `.env` sesuai koneksi PostgreSQL Anda.
-5. Jalankan development server:
+Set `DATABASE_URL` in `.env` to a valid PostgreSQL connection string.
 
-   ```bash
-   pnpm dev
-   ```
+Start the development server:
 
-6. Buka aplikasi di browser sesuai URL yang ditampilkan terminal.
+```bash
+pnpm dev
+```
 
-## Scripts
+Open the local URL printed by Vite in the terminal.
 
-| Script             | Keterangan                                                    |
-| ------------------ | ------------------------------------------------------------- |
-| `pnpm dev`         | Menjalankan development server                                |
-| `pnpm build`       | Membuat build production                                      |
-| `pnpm preview`     | Menjalankan preview build production                          |
-| `pnpm check`       | Menjalankan sinkronisasi SvelteKit dan pemeriksaan type/check |
-| `pnpm check:watch` | Menjalankan pemeriksaan type/check dalam mode watch           |
-| `pnpm lint`        | Menjalankan Prettier check dan ESLint                         |
-| `pnpm format`      | Merapikan format file dengan Prettier                         |
-| `pnpm db:push`     | Mendorong schema database ke database target                  |
-| `pnpm db:generate` | Membuat file migration Drizzle                                |
-| `pnpm db:migrate`  | Menjalankan migration database                                |
-| `pnpm db:studio`   | Membuka Drizzle Studio                                        |
+## Available Scripts
 
-## Struktur File Penting
+| Script             | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `pnpm dev`         | Start the Vite development server            |
+| `pnpm build`       | Build the app for production                 |
+| `pnpm preview`     | Preview the production build                 |
+| `pnpm check`       | Run SvelteKit sync and Svelte type checking  |
+| `pnpm check:watch` | Run Svelte type checking in watch mode       |
+| `pnpm lint`        | Run Prettier check and ESLint                |
+| `pnpm format`      | Format the project with Prettier             |
+| `pnpm db:push`     | Push the Drizzle schema to the configured DB |
+| `pnpm db:generate` | Generate Drizzle migration files             |
+| `pnpm db:migrate`  | Run Drizzle migrations                       |
+| `pnpm db:studio`   | Open Drizzle Studio                          |
+
+## Project Structure
 
 ```text
 src/
 ├── routes/
-│   ├── +page.svelte                    # Halaman utama invoice builder
-│   ├── +layout.svelte                  # Layout aplikasi
-│   └── layout.css                      # Global styling
+│   ├── +page.svelte              # Main invoice builder page
+│   ├── +layout.svelte            # Application layout and favicon setup
+│   └── layout.css                # Global Tailwind and print styles
 ├── lib/
+│   ├── assets/                   # SVG assets used by the UI
 │   ├── components/invoice/
-│   │   ├── InvoiceForm.svelte          # Form input invoice
-│   │   └── InvoicePreview.svelte       # Preview invoice
-│   ├── server/db/
-│   │   ├── index.ts                    # Koneksi database
-│   │   └── schema.ts                   # Schema database Drizzle
-│   └── types/invoice.ts                # Type data invoice
-├── app.html                            # Template HTML utama
-├── drizzle.config.ts                   # Konfigurasi Drizzle
-└── svelte.config.js                    # Konfigurasi SvelteKit
+│   │   ├── InvoiceForm.svelte    # Invoice input form
+│   │   └── InvoicePreview.svelte # Printable invoice preview
+│   ├── server/db/                # Drizzle database setup
+│   └── types/invoice.ts          # Invoice data types
+└── app.html                      # SvelteKit HTML template
 ```
 
-## Catatan
+## PDF Export
 
-Fitur simpan PDF menggunakan dialog print browser (`Print` / `Save as PDF`) dari preview invoice yang ditampilkan aplikasi.
+The `Download PDF` action uses the browser's native print dialog. Choose **Save as PDF** as the destination to export the current invoice. This avoids canvas-based PDF rendering issues and keeps the output aligned with how modern browsers render print layouts.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
