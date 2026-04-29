@@ -7,13 +7,7 @@ const config = {
 		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 	},
 	kit: {
-		adapter: adapter(),
-		typescript: {
-			config: (config) => ({
-				...config,
-				include: [...config.include, '../drizzle.config.ts']
-			})
-		}
+		adapter: adapter()
 	}
 };
 
