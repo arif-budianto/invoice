@@ -13,6 +13,7 @@ The app keeps the editing experience dark, compact, and easy to scan, while the 
 - Native browser print flow for printing or saving the invoice as PDF
 - Mobile-friendly builder layout with a readable preview structure
 - Dark-mode workspace with a clean printable invoice document
+- Node adapter setup for running the app outside static-only hosting
 
 ## Tech Stack
 
