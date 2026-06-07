@@ -11,6 +11,9 @@ WORKDIR /app
 # Copy configuration files for pnpm build policies
 COPY package.json pnpm-lock.yaml .pnpmconfig.json ./
 
+# Explicitly set ignore-scripts to false as a fallback for the environment
+RUN pnpm config set ignore-scripts false
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
@@ -35,6 +38,9 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/.pnpmconfig.json ./.pnpmconfig.json
+
+# Explicitly set ignore-scripts to false
+RUN pnpm config set ignore-scripts false
 
 # Install only production dependencies
 RUN pnpm install --prod --frozen-lockfile
