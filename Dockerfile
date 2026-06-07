@@ -9,16 +9,19 @@ RUN corepack enable
 WORKDIR /app
 
 # Copy configuration files for pnpm build policies
-COPY package.json pnpm-lock.yaml .pnpmconfig.json ./
+COPY package.json pnpm-lock.yaml ./
 
-# Explicitly set ignore-scripts to false as a fallback for the environment
-RUN pnpm config set ignore-scripts false
+# Configure pnpm to bypass security prompt via global config
+RUN pnpm config set ignore-scripts true
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (skipping all postinstall scripts to prevent build policy error)
+RUN CI=true pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy the rest of the source code
 COPY . .
+
+# Run necessary setup scripts manually since ignore-scripts is true
+RUN pnpm exec svelte-kit sync
 
 # Build the SvelteKit app
 RUN pnpm run build
@@ -37,13 +40,9 @@ RUN corepack enable
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/.pnpmconfig.json ./.pnpmconfig.json
 
-# Explicitly set ignore-scripts to false
-RUN pnpm config set ignore-scripts false
-
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
+# Install only production dependencies (ignoring scripts)
+RUN CI=true pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Expose the port SvelteKit Node adapter uses (default 3000)
 EXPOSE 3000
