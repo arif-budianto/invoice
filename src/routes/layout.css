@@ -86,6 +86,40 @@ textarea {
 		background-color: #ffffff;
 	}
 
+	@page {
+		size: A4 portrait;
+		margin: 15mm;
+	}
+
+	body {
+		background-color: #ffffff !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	/* Sembunyikan SEMUA elemen secara default saat print */
+	body * {
+		visibility: hidden;
+	}
+
+	/* Tampilkan HANYA elemen invoice beserta anak-anaknya */
+	#printable-invoice, #printable-invoice * {
+		visibility: visible;
+	}
+
+	/* Pindahkan invoice ke ujung paling atas halaman agar tidak terpotong flexbox */
+	#printable-invoice {
+		position: absolute !important;
+		left: 0 !important;
+		top: 0 !important;
+		width: 100% !important;
+		height: 266mm !important; /* A4 height (297) - Margins (15+15) */
+		min-height: 0 !important;
+		margin: 0 !important;
+		box-shadow: none !important;
+		overflow: hidden !important;
+	}
+
 	html,
 	body {
 		min-height: auto;
