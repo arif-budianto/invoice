@@ -15,187 +15,253 @@
 	let { form, items, subtotal, taxRate, taxAmount, total, formatCurrency, formatDate }: Props =
 		$props();
 
-	let isDownloading = $state(false);
+	let isGeneratingPdf = $state(false);
 	let downloadError = $state<string | null>(null);
+	let previewWrapperWidth = $state(0);
+	
+	let scale = $derived(previewWrapperWidth > 0 && previewWrapperWidth < 820 ? previewWrapperWidth / 820 : 1);
+	const invoicePages = $derived.by(() => {
+		const pages = [];
+		let remaining = [...items];
+		let pageIndex = 0;
+		let hasFooter = false;
 
-	const handleDownloadPdf = async () => {
-		if (typeof window === 'undefined' || isDownloading) return;
+		if (remaining.length === 0) {
+			return [{ pageItems: [], isFirst: true, isLast: true, pageNumber: 1 }];
+		}
 
+		while (!hasFooter) {
+			let isFirst = pageIndex === 0;
+			let maxWithFooter = isFirst ? 7 : 10;
+			let maxNoFooter = isFirst ? 12 : 15;
+
+			if (remaining.length <= maxWithFooter) {
+				pages.push({ 
+					pageItems: remaining.splice(0, remaining.length), 
+					isFirst, 
+					isLast: true,
+					pageNumber: pageIndex + 1
+				});
+				hasFooter = true;
+			} else {
+				pages.push({ 
+					pageItems: remaining.splice(0, maxNoFooter), 
+					isFirst, 
+					isLast: false,
+					pageNumber: pageIndex + 1
+				});
+			}
+			pageIndex++;
+		}
+		return pages;
+	});
+
+	let totalHeight = $derived(invoicePages.length * 1123 + Math.max(0, invoicePages.length - 1) * 32);
+
+	async function handleDownloadPdf() {
+		if (typeof window === 'undefined') return;
+		
+		isGeneratingPdf = true;
 		downloadError = null;
-		isDownloading = true;
 
 		try {
-			window.print();
+			const { toPng } = await import('html-to-image');
+			const { jsPDF } = await import('jspdf');
+			
+			const pdf = new jsPDF({
+				orientation: 'portrait',
+				unit: 'mm',
+				format: 'a4'
+			});
+
+			for (let i = 0; i < invoicePages.length; i++) {
+				const element = document.getElementById(`printable-page-${i + 1}`);
+				if (!element) throw new Error("Invoice page element not found");
+
+				const originalTransform = element.style.transform;
+				element.style.transform = 'none';
+
+				const imgData = await toPng(element, {
+					quality: 0.98,
+					pixelRatio: 2,
+					backgroundColor: '#ffffff',
+					width: 794,
+					height: 1123,
+					style: {
+						width: '794px',
+						height: '1123px',
+						maxWidth: '794px',
+						margin: '0',
+						transform: 'none'
+					}
+				});
+
+				element.style.transform = originalTransform;
+
+				const pdfWidth = pdf.internal.pageSize.getWidth();
+				const pdfHeight = pdf.internal.pageSize.getHeight();
+
+				if (i > 0) {
+					pdf.addPage();
+				}
+
+				pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+			}
+
+			const filename = form.invoiceNumber && form.clientName 
+				? `${form.invoiceNumber} - ${form.clientName}.pdf` 
+				: 'Invoice.pdf';
+
+			pdf.save(filename);
 		} catch (error) {
-			console.error('Gagal membuka dialog print invoice:', error);
-			downloadError =
-				error instanceof Error && error.message
-					? `Gagal membuka dialog print: ${error.message}`
-					: 'Gagal membuka dialog print. Silakan coba lagi.';
+			console.error("Gagal membuat PDF:", error);
+			downloadError = "Terjadi kesalahan saat membuat PDF. Silakan coba lagi.";
 		} finally {
-			isDownloading = false;
+			isGeneratingPdf = false;
 		}
-	};
+	}
 </script>
 
-<section class="invoice-preview-section space-y-4 lg:sticky lg:top-6">
-	<div class="invoice-preview-controls space-y-2">
-		<div class="flex items-center justify-end">
-			<button
-				type="button"
-				onclick={handleDownloadPdf}
-				disabled={isDownloading}
-				class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-			>
-				{isDownloading ? 'Membuka print...' : 'Download PDF'}
-			</button>
-		</div>
+<div class="space-y-4 pb-20 flex flex-col w-full items-center">
+	{#if downloadError}
+		<p class="text-sm text-red-400 w-full text-center">{downloadError}</p>
+	{/if}
 
-		{#if downloadError}
-			<p class="text-right text-sm text-red-300">{downloadError}</p>
-		{/if}
+	<div class="w-full max-w-[820px] mx-auto flex justify-center" bind:clientWidth={previewWrapperWidth}>
+		<div 
+			id="invoice-pdf-container" 
+			class="flex flex-col gap-8 w-[794px] items-center"
+			style="transform: scale({scale}); transform-origin: top center; margin-bottom: {totalHeight * (scale - 1)}px;"
+		>
+			{#each invoicePages as page (page.pageNumber)}
+				<div id="printable-page-{page.pageNumber}" class="bg-white p-14 text-slate-800 relative print:m-0 print:shadow-none print:overflow-visible shadow-2xl border border-slate-200 w-[794px] h-[1123px] shrink-0 flex flex-col font-sans box-border overflow-hidden print:break-after-page">
+					
+				{#if page.isFirst}
+					<div class="mb-12 shrink-0">
+						<h1 class="text-5xl font-black tracking-tight text-slate-900 mb-4 uppercase">INVOICE</h1>
+						<div class="text-sm text-slate-700 leading-snug space-y-0.5">
+							{#if form.fromName}<p>{form.fromName}</p>{/if}
+							{#if form.fromAddress}<p>{form.fromAddress}</p>{/if}
+							{#if form.fromPhone}<p>{form.fromPhone}</p>{/if}
+							{#if form.fromEmail}<p>{form.fromEmail}</p>{/if}
+						</div>
+					</div>
+
+					<div class="flex flex-row justify-between items-start gap-0 mb-6 shrink-0">
+						<div class="w-1/2">
+							<p class="text-[11px] font-bold tracking-widest text-slate-500 uppercase mb-2">BILL TO</p>
+							<div class="text-sm text-slate-800 leading-snug space-y-0.5">
+								{#if form.clientName}<p>{form.clientName}</p>{/if}
+								{#if form.clientAddress}<p>{form.clientAddress}</p>{/if}
+								{#if form.clientPhone}<p>{form.clientPhone}</p>{/if}
+								{#if form.clientEmail}<p>{form.clientEmail}</p>{/if}
+							</div>
+						</div>
+
+						<div class="w-1/2">
+							<table class="text-sm text-right ml-auto">
+								<tbody>
+									<tr>
+										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Invoice #:</td>
+										<td class="pb-1">{form.invoiceNumber || '-'}</td>
+									</tr>
+									<tr>
+										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Date:</td>
+										<td class="pb-1">{formatDate(form.issueDate)}</td>
+									</tr>
+									<tr>
+										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Due Date:</td>
+										<td class="pb-1">{formatDate(form.dueDate)}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				{/if}
+
+				{#if !page.isFirst}
+					<div class="flex justify-between items-end mb-6 pt-4 shrink-0">
+						<h2 class="text-2xl font-black text-slate-900 uppercase">INVOICE</h2>
+						<div class="text-right text-sm text-slate-700">
+							<p class="font-bold">{form.invoiceNumber || '-'}</p>
+							<p>{form.clientName || '-'}</p>
+						</div>
+					</div>
+				{/if}
+
+				<div class="h-[2px] bg-slate-800 mb-6 w-full shrink-0" style="-webkit-print-color-adjust: exact;"></div>
+
+				<div class="mb-8 flex-grow">
+					<table class="w-full text-left border-collapse border border-slate-400">
+						<thead class="bg-slate-100 border-y border-slate-400" style="-webkit-print-color-adjust: exact;">
+							<tr>
+								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest w-[50%]">ITEM</th>
+								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-center w-[15%]">QTY</th>
+								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-center w-[15%]">PRICE</th>
+								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-right w-[20%]">TOTAL</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-300 border-b border-slate-400">
+							{#each page.pageItems as item (item.id)}
+								<tr>
+									<td class="py-4 px-4 text-sm text-slate-800 pr-8 font-medium">{item.description || '-'}</td>
+									<td class="py-4 px-4 text-sm text-slate-800 text-center">{item.quantity}</td>
+									<td class="py-4 px-4 text-sm text-slate-800 text-center">{formatCurrency(item.unitPrice)}</td>
+									<td class="py-4 px-4 text-sm text-slate-800 text-right font-semibold">{formatCurrency(item.quantity * item.unitPrice)}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+
+				{#if page.isLast}
+					<div class="flex justify-end mb-12 shrink-0">
+						<div class="w-[45%]">
+							<div class="space-y-2 text-sm text-slate-600 px-4">
+								<div class="flex justify-between">
+									<span>Subtotal:</span>
+									<span class="font-bold text-slate-900">{formatCurrency(subtotal)}</span>
+								</div>
+								<div class="flex justify-between">
+									<span>Pajak ({taxRate}%):</span>
+									<span class="text-slate-900">{formatCurrency(taxAmount)}</span>
+								</div>
+								<div class="h-[2px] bg-slate-800 mt-3 mb-2" style="-webkit-print-color-adjust: exact;"></div>
+								<div class="flex justify-between items-center py-1">
+									<span class="text-base font-bold text-slate-900">Total:</span>
+									<span class="text-base font-bold text-slate-900">{formatCurrency(total)}</span>
+								</div>
+								<div class="h-[4px] bg-slate-800" style="-webkit-print-color-adjust: exact;"></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="mt-auto pt-8 shrink-0">
+						<p class="text-[11px] font-bold tracking-widest text-slate-500 uppercase mb-2">NOTES</p>
+						<p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{form.notes || 'Terima kasih atas kerja sama Anda.'}</p>
+					</div>
+				{/if}
+
+				{#if invoicePages.length > 1}
+					<div class="absolute bottom-6 left-0 w-full text-center text-[10px] text-slate-400 font-medium uppercase tracking-widest print:hidden">
+						Halaman {page.pageNumber} dari {invoicePages.length}
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</div>
 	</div>
 
-	<section
-		class="invoice-preview-document rounded-[28px] border border-cyan-400/20 bg-[#f8fafc] p-5 text-slate-900 shadow-[0_24px_90px_rgba(8,15,32,0.35)] sm:p-7 lg:p-8"
-	>
-		<div class="space-y-8">
-			<div
-				class="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between"
-			>
-				<div class="space-y-3">
-					<div
-						class="invoice-preview-badge inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-cyan-700 uppercase"
-					>
-						Invoice preview
-					</div>
-					<div>
-						<h2 class="text-3xl font-semibold tracking-tight text-slate-950">
-							{form.fromName || 'Nama bisnis'}
-						</h2>
-						<p class="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-							{form.fromAddress || 'Alamat bisnis'} · {form.fromPhone || 'Telepon'} · {form.fromEmail ||
-								'Email'}
-						</p>
-					</div>
-				</div>
-				<div class="space-y-2 text-sm text-slate-500 sm:text-right">
-					<p class="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">Nomor</p>
-					<p class="text-lg font-semibold text-slate-900">{form.invoiceNumber}</p>
-					<div class="grid gap-1">
-						<p>Terbit: {formatDate(form.issueDate)}</p>
-						<p>Jatuh tempo: {formatDate(form.dueDate)}</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="grid gap-6 sm:grid-cols-2">
-				<div class="space-y-2">
-					<p class="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
-						Ditagihkan ke
-					</p>
-					<div class="space-y-1 text-sm text-slate-600">
-						<p class="text-base font-semibold text-slate-950">{form.clientName || 'Nama klien'}</p>
-						<p>{form.clientEmail || 'Email klien'}</p>
-						<p>{form.clientPhone || 'Telepon klien'}</p>
-						<p>{form.clientAddress || 'Alamat klien'}</p>
-					</div>
-				</div>
-				<div class="space-y-2">
-					<p class="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">Ringkasan</p>
-					<div class="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-						<div class="flex items-center justify-between py-2 text-sm text-slate-600">
-							<span>Subtotal</span>
-							<span class="font-medium text-slate-900">{formatCurrency(subtotal)}</span>
-						</div>
-						<div class="flex items-center justify-between py-2 text-sm text-slate-600">
-							<span>Pajak ({taxRate}%)</span>
-							<span class="font-medium text-slate-900">{formatCurrency(taxAmount)}</span>
-						</div>
-						<div
-							class="mt-2 flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold text-slate-950"
-						>
-							<span>Total</span>
-							<span>{formatCurrency(total)}</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div
-				class="space-y-3 sm:space-y-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200"
-			>
-				<div
-					class="hidden grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase sm:grid"
-				>
-					<span>Deskripsi</span>
-					<span>Qty</span>
-					<span>Harga</span>
-					<span class="text-right">Jumlah</span>
-				</div>
-				<div class="space-y-3 sm:space-y-0 sm:divide-y sm:divide-slate-200 sm:bg-white">
-					{#each items as item (item.id)}
-						<div class="rounded-2xl border border-slate-200 bg-white p-4 sm:hidden">
-							<div class="space-y-3 text-sm text-slate-600">
-								<div class="space-y-1">
-									<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
-										Deskripsi
-									</p>
-									<p class="font-medium text-slate-900">{item.description || 'Item pekerjaan'}</p>
-								</div>
-								<div class="grid grid-cols-2 gap-3">
-									<div class="space-y-1">
-										<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
-											Qty
-										</p>
-										<p class="font-medium text-slate-900">{item.quantity}</p>
-									</div>
-									<div class="space-y-1">
-										<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
-											Harga
-										</p>
-										<p class="font-medium text-slate-900">{formatCurrency(item.unitPrice)}</p>
-									</div>
-								</div>
-								<div class="border-t border-slate-200 pt-3">
-									<div class="flex items-center justify-between gap-3">
-										<p class="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
-											Jumlah
-										</p>
-										<p class="font-semibold text-slate-900">
-											{formatCurrency(item.quantity * item.unitPrice)}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div
-							class="hidden grid-cols-[minmax(0,1.7fr)_0.7fr_1fr_1fr] gap-3 px-4 py-4 text-sm text-slate-600 sm:grid"
-						>
-							<div>
-								<p class="font-medium text-slate-900">{item.description || 'Item pekerjaan'}</p>
-							</div>
-							<p>{item.quantity}</p>
-							<p>{formatCurrency(item.unitPrice)}</p>
-							<p class="text-right font-medium text-slate-900">
-								{formatCurrency(item.quantity * item.unitPrice)}
-							</p>
-						</div>
-					{/each}
-				</div>
-			</div>
-
-			<div class="grid gap-6 border-t border-slate-200 pt-6 sm:grid-cols-[1.2fr_0.8fr]">
-				<div class="space-y-2">
-					<p class="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">Catatan</p>
-					<p class="text-sm leading-6 text-slate-600">{form.notes}</p>
-				</div>
-				<div class="space-y-2 rounded-2xl bg-slate-950 px-5 py-5 text-sm text-slate-300">
-					<p class="text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase">Pembayaran</p>
-					<p class="text-xl font-semibold text-white">{formatCurrency(total)}</p>
-					<p>Mohon lakukan pembayaran sebelum {formatDate(form.dueDate)}.</p>
-				</div>
-			</div>
-		</div>
-	</section>
-</section>
+	<div class="mt-4 flex w-full max-w-[794px] flex-col print:hidden px-4 sm:px-0">
+		<button
+			disabled={isGeneratingPdf}
+			class="w-full cursor-pointer flex items-center justify-center gap-2 rounded-[24px] bg-cyan-500 hover:bg-cyan-400 p-4 text-center text-[16px] font-extrabold text-slate-900 shadow-[0_0_30px_rgba(34,211,238,0.3)] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-wait"
+			onclick={handleDownloadPdf}
+		>
+			<svg class="w-5 h-5 {isGeneratingPdf ? 'animate-bounce' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+			</svg>
+			{isGeneratingPdf ? 'Menyiapkan File PDF...' : 'Download PDF'}
+		</button>
+	</div>
+</div>
