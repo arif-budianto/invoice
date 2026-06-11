@@ -126,7 +126,7 @@
 	class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_28%),linear-gradient(180deg,#020617_0%,#020817_42%,#020617_100%)] print:bg-none print:min-h-0"
 >
 	<div
-		class="mx-auto flex min-h-screen max-w-[1800px] flex-col xl:flex-row gap-8 xl:gap-16 2xl:gap-32 px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-12 print:block print:w-full print:max-w-none print:min-h-0 print:p-0 print:m-0"
+		class="mx-auto flex min-h-screen max-w-[1440px] flex-col xl:flex-row gap-8 xl:gap-12 px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-12 print:block print:w-full print:max-w-none print:min-h-0 print:p-0 print:m-0"
 	>
 		<div class="w-full xl:w-[40%] {showPreview ? 'hidden xl:block' : 'block'} print:hidden">
 			<div in:fade={{ duration: 200 }} class="space-y-6">
