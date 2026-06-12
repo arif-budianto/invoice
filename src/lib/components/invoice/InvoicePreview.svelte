@@ -6,6 +6,7 @@
 		form: InvoiceFormData;
 		items: InvoiceItem[];
 		subtotal: number;
+		discountAmount: number;
 		taxRate: number;
 		taxAmount: number;
 		total: number;
@@ -13,7 +14,7 @@
 		formatDate: (value: string) => string;
 	};
 
-	let { form, items, subtotal, taxRate, taxAmount, total, formatCurrency, formatDate }: Props =
+	let { form, items, subtotal, discountAmount, taxRate, taxAmount, total, formatCurrency, formatDate }: Props =
 		$props();
 
 	let isGeneratingPdf = $state(false);
@@ -33,9 +34,10 @@
 		let remaining = [...items];
 		let pageIndex = 0;
 		let hasFooter = false;
+		let currentGlobalIndex = 0;
 
 		if (remaining.length === 0) {
-			return [{ pageItems: [], isFirst: true, isLast: true, pageNumber: 1 }];
+			return [{ pageItems: [], isFirst: true, isLast: true, pageNumber: 1, startIndex: 0 }];
 		}
 
 		while (!hasFooter) {
@@ -48,16 +50,20 @@
 					pageItems: remaining.splice(0, remaining.length), 
 					isFirst, 
 					isLast: true,
-					pageNumber: pageIndex + 1
+					pageNumber: pageIndex + 1,
+					startIndex: currentGlobalIndex
 				});
 				hasFooter = true;
 			} else {
+				let taken = remaining.splice(0, maxNoFooter);
 				pages.push({ 
-					pageItems: remaining.splice(0, maxNoFooter), 
+					pageItems: taken, 
 					isFirst, 
 					isLast: false,
-					pageNumber: pageIndex + 1
+					pageNumber: pageIndex + 1,
+					startIndex: currentGlobalIndex
 				});
+				currentGlobalIndex += taken.length;
 			}
 			pageIndex++;
 		}
@@ -214,21 +220,21 @@
 					</div>
 
 					<!-- Invoice To & Metode Pembayaran -->
-					<div class="px-12 pt-8 flex justify-between shrink-0">
-						<div class="w-1/2">
+					<div class="px-12 pt-8 grid grid-cols-2 gap-8 shrink-0">
+						<div>
 							<h3 class="text-[#1363a6] font-bold text-[11px] tracking-wide mb-2 uppercase">DITAGIHKAN KEPADA:</h3>
 							<p class="text-[22px] font-bold text-slate-900 leading-none mb-2">{form.clientName || 'Nama Pelanggan'}</p>
 							<p class="text-[11px] text-slate-600 mb-3">{form.clientAddress || 'Alamat Pelanggan'}</p>
 							<p class="text-[11px] font-bold text-slate-800 mb-0.5">Telepon: <span class="font-normal text-slate-600 ml-1">{form.clientPhone || '+123 4567 8910'}</span></p>
 							<p class="text-[11px] font-bold text-slate-800">Email: <span class="font-normal text-slate-600 ml-1">{form.clientEmail || 'example@mail.com'}</span></p>
 						</div>
-						<div class="w-1/2 pl-12 pt-2">
-							<h3 class="text-[#1363a6] font-bold text-[14px] tracking-wide mb-3">Metode Pembayaran</h3>
+						<div>
+							<h3 class="text-[#1363a6] font-bold text-[11px] tracking-wide mb-2 uppercase">Metode Pembayaran:</h3>
 							<table class="text-[11px] text-slate-700 w-full">
 								<tbody>
-									<tr><td class="font-bold py-0.5 w-24 text-slate-800">No. Rekening:</td><td class="py-0.5">1234 5678 910</td></tr>
-									<tr><td class="font-bold py-0.5 text-slate-800">Atas Nama:</td><td class="py-0.5">Nama Pelanggan</td></tr>
-									<tr><td class="font-bold py-0.5 text-slate-800">Nama Bank:</td><td class="py-0.5">Nama Bank</td></tr>
+									<tr><td class="font-bold py-0.5 w-24 text-slate-800">No. Rekening:</td><td class="py-0.5 text-slate-600">{form.bankAccount || '1234 5678 910'}</td></tr>
+									<tr><td class="font-bold py-0.5 text-slate-800">Atas Nama:</td><td class="py-0.5 text-slate-600">{form.bankAccountName || 'Nama Pemilik Rekening'}</td></tr>
+									<tr><td class="font-bold py-0.5 text-slate-800">Nama Bank:</td><td class="py-0.5 text-slate-600">{form.bankName || 'Nama Bank'}</td></tr>
 								</tbody>
 							</table>
 						</div>
@@ -288,7 +294,7 @@
 						<tbody>
 							{#each page.pageItems as item, idx (item.id)}
 								<tr class="border-b border-slate-200/60">
-									<td class="py-4 px-2 text-[11px] text-slate-500 text-center font-medium">{String((page.pageNumber-1)*15 + idx + 1).padStart(2, '0')}</td>
+									<td class="py-4 px-2 text-[11px] text-slate-500 text-center font-medium">{String(page.startIndex + idx + 1).padStart(2, '0')}</td>
 									<td class="py-4 px-4">
 										<p class="text-[12px] font-bold text-slate-800">{item.description || '-'}</p>
 										<p class="text-[10px] text-slate-400 mt-1 italic leading-relaxed"></p>
@@ -317,10 +323,12 @@
 										<td class="py-1 text-right pr-12">Subtotal:</td>
 										<td class="py-1 text-right font-bold text-slate-900">{formatCurrency(subtotal)}</td>
 									</tr>
+									{#if form.discount > 0}
 									<tr>
-										<td class="py-1 text-right pr-12">Diskon:</td>
-										<td class="py-1 text-right font-bold text-slate-900">00.00</td>
+										<td class="py-1 text-right pr-12">Diskon ({form.discount}%):</td>
+										<td class="py-1 text-right font-bold text-rose-600">-{formatCurrency(discountAmount)}</td>
 									</tr>
+									{/if}
 									<tr>
 										<td class="py-1 text-right pr-12">Pajak ({taxRate}%):</td>
 										<td class="py-1 text-right font-bold text-slate-900">{formatCurrency(taxAmount)}</td>
