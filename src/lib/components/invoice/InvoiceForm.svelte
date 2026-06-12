@@ -59,6 +59,14 @@
 		focusedPriceInputs[item.id] = false;
 		priceDrafts[item.id] = formatPrice(item.unitPrice);
 	}
+
+	function handleBankAccountFormat(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const rawValue = input.value.replace(/\D/g, '');
+		const formatted = rawValue.replace(/(.{4})/g, '$1 ').trim();
+		form.bankAccount = formatted;
+		input.value = formatted;
+	}
 </script>
 
 <div class="hidden lg:block">
@@ -168,6 +176,27 @@
 
 	<div class="space-y-4">
 		<div class="space-y-1">
+			<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Metode Pembayaran</h2>
+			<p class="text-sm text-slate-500">Detail bank atau tujuan transfer.</p>
+		</div>
+		<div class="grid gap-4 sm:grid-cols-3">
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">Nama Bank</span>
+				<input bind:value={form.bankName} class="field" placeholder="BCA" />
+			</label>
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">No. Rekening</span>
+				<input bind:value={form.bankAccount} class="field" placeholder="1234 5678 910" type="text" inputmode="numeric" onblur={handleBankAccountFormat} />
+			</label>
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">Atas Nama</span>
+				<input bind:value={form.bankAccountName} class="field" placeholder="PT Studio Arunika" />
+			</label>
+		</div>
+	</div>
+
+<div class="space-y-4">
+		<div class="space-y-1">
 			<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Item tagihan</h2>
 			<p class="text-sm text-slate-500">Tambahkan layanan atau produk seperlunya.</p>
 		</div>
@@ -274,6 +303,8 @@
 			Tambah item
 		</button>
 	</div>
+
+
 
 	<label class="space-y-2">
 		<span class="text-sm font-medium text-slate-200">Catatan</span>
@@ -392,10 +423,34 @@
 	</section>
 
 	<section class="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur sm:p-8 space-y-6">
+		<div class="flex items-center gap-3 border-b border-white/5 pb-4">
+			<div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+				3
+			</div>
+			<h2 class="text-sm font-semibold tracking-[0.22em] text-white uppercase">Metode Pembayaran</h2>
+		</div>
+		
+		<div class="grid gap-5 sm:grid-cols-2">
+			<label class="space-y-2 block">
+				<span class="text-sm font-medium text-slate-300">Nama Bank</span>
+				<input bind:value={form.bankName} class="field" placeholder="BCA" />
+			</label>
+			<label class="space-y-2 block">
+				<span class="text-sm font-medium text-slate-300">No. Rekening</span>
+				<input bind:value={form.bankAccount} class="field" placeholder="1234 5678 910" type="text" inputmode="numeric" onblur={handleBankAccountFormat} />
+			</label>
+			<label class="space-y-2 block sm:col-span-2">
+				<span class="text-sm font-medium text-slate-300">Atas Nama</span>
+				<input bind:value={form.bankAccountName} class="field" placeholder="PT Studio Arunika" />
+			</label>
+		</div>
+	</section>
+
+	<section class="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur sm:p-8 space-y-6">
 		<div class="flex items-center justify-between border-b border-white/5 pb-4">
 			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
-					3
+				<div class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 font-bold">
+					4
 				</div>
 				<h2 class="text-sm font-semibold tracking-[0.22em] text-white uppercase">Item Tagihan</h2>
 			</div>
@@ -451,10 +506,12 @@
 		</div>
 	</section>
 
+
+
 	<section class="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur sm:p-8 space-y-6">
 		<div class="flex items-center gap-3 border-b border-white/5 pb-4">
 			<div class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 font-bold">
-				4
+				5
 			</div>
 			<h2 class="text-sm font-semibold tracking-[0.22em] text-white uppercase">Catatan Tambahan</h2>
 		</div>

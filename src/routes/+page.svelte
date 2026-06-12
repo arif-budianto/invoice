@@ -49,7 +49,11 @@
 		clientName: 'PT Sinar Utama',
 		clientEmail: 'finance@sinarutama.co.id',
 		clientPhone: '021 5555 9999',
-		clientAddress: 'Bandung, Indonesia'
+		clientAddress: 'Bandung, Indonesia',
+		bankName: 'BCA',
+		bankAccount: '1234 5678 910',
+		bankAccountName: 'PT Studio Arunika',
+		discount: 0
 	});
 
 	let items = $state<InvoiceItem[]>([
@@ -64,12 +68,22 @@
 			0
 		)
 	);
-	const taxAmount = $derived(Math.round(subtotal * (validatedTaxRate / 100)));
-	const total = $derived(subtotal + taxAmount);
+	const validatedDiscountRate = $derived(
+		Number.isFinite(form.discount) && form.discount >= 0 && form.discount <= 100
+			? form.discount
+			: 0
+	);
+
+	const discountAmount = $derived(Math.round(subtotal * (validatedDiscountRate / 100)));
+	const subtotalAfterDiscount = $derived(Math.max(0, subtotal - discountAmount));
+	const taxAmount = $derived(Math.round(subtotalAfterDiscount * (validatedTaxRate / 100)));
+	const total = $derived(subtotalAfterDiscount + taxAmount);
 
 	const handleTaxBlur = () => {
 		taxRate = validatedTaxRate;
 	};
+
+
 
 	const formatCurrency = (value: number) =>
 		new Intl.NumberFormat('id-ID', {
@@ -103,7 +117,11 @@
 </script>
 
 <svelte:head>
-	<title>{form.invoiceNumber ? `${form.invoiceNumber} - ${form.clientName || 'Invoice'}` : 'Invoice Builder'}</title>
+	<title
+		>{form.invoiceNumber
+			? `${form.invoiceNumber} - ${form.clientName || 'Invoice'}`
+			: 'Invoice Builder'}</title
+	>
 	<meta
 		name="description"
 		content="Web pembuatan invoice dengan tampilan modern, profesional, dan preview langsung."
@@ -123,42 +141,54 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_28%),linear-gradient(180deg,#020617_0%,#020817_42%,#020617_100%)] print:bg-none print:min-h-0"
+	class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_28%),linear-gradient(180deg,#020617_0%,#020817_42%,#020617_100%)] print:min-h-0 print:bg-none"
 >
 	<div
-		class="mx-auto flex min-h-screen max-w-[1800px] flex-col xl:flex-row gap-8 xl:gap-16 2xl:gap-32 px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-12 print:block print:w-full print:max-w-none print:min-h-0 print:p-0 print:m-0"
+		class="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-8 px-4 py-4 sm:px-6 sm:py-6 xl:flex-row xl:px-8 xl:py-12 print:m-0 print:block print:min-h-0 print:w-full print:max-w-none print:p-0"
 	>
-		<div class="w-full xl:w-[40%] {showPreview ? 'hidden xl:block' : 'block'} print:hidden">
+		<div class="w-full xl:w-1/2 {showPreview ? 'hidden xl:block' : 'block'} print:hidden">
 			<div in:fade={{ duration: 200 }} class="space-y-6">
 				<InvoiceForm {form} {items} onAddItem={addItem} onRemoveItem={removeItem} />
 
 				<section
-					class="grid gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 sm:grid-cols-[1fr_auto] sm:items-end sm:p-7 backdrop-blur"
+					class="flex flex-col gap-6 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur sm:flex-row sm:items-end sm:justify-between sm:p-7"
 				>
 					<div class="space-y-2">
 						<p class="text-xs font-medium tracking-[0.24em] text-slate-500 uppercase">
 							Pengaturan total
 						</p>
 						<h2 class="text-xl font-semibold text-white">Ringkasan nilai tagihan</h2>
-						<p class="text-sm leading-6 text-slate-400">
-							Atur pajak seperlunya, total invoice akan diperbarui otomatis.
+						<p class="max-w-sm text-sm leading-6 text-slate-400">
+							Atur diskon dan pajak seperlunya, total invoice akan diperbarui otomatis.
 						</p>
 					</div>
-					<label class="space-y-2 sm:min-w-40">
-						<span class="text-sm font-medium text-slate-200">Pajak (%)</span>
-						<input
-							bind:value={taxRate}
-							class="field"
-							min="0"
-							max="100"
-							type="number"
-							onblur={handleTaxBlur}
-						/>
-					</label>
+					<div class="flex w-full shrink-0 gap-4 sm:w-auto">
+						<label class="w-24 shrink-0 space-y-2">
+							<span class="text-sm font-medium text-slate-200">Diskon (%)</span>
+							<input
+								bind:value={form.discount}
+								class="field w-full"
+								min="0"
+								max="100"
+								type="number"
+							/>
+						</label>
+						<label class="w-24 shrink-0 space-y-2">
+							<span class="text-sm font-medium text-slate-200">Pajak (%)</span>
+							<input
+								bind:value={taxRate}
+								class="field w-full"
+								min="0"
+								max="100"
+								type="number"
+								onblur={handleTaxBlur}
+							/>
+						</label>
+					</div>
 				</section>
 
 				<button
-					class="xl:hidden mt-4 w-full cursor-pointer rounded-[24px] border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 p-4 text-center text-lg font-bold text-cyan-50 shadow-[0_0_30px_rgba(34,211,238,0.15)] transition-all hover:scale-[1.01]"
+					class="mt-4 w-full cursor-pointer rounded-[24px] border border-cyan-400/30 bg-cyan-400/10 p-4 text-center text-lg font-bold text-cyan-50 shadow-[0_0_30px_rgba(34,211,238,0.15)] transition-all hover:scale-[1.01] hover:bg-cyan-400/20 xl:hidden"
 					onclick={() => (showPreview = true)}
 				>
 					Lihat Hasil Preview
@@ -166,10 +196,17 @@
 			</div>
 		</div>
 
-		<div class="w-full xl:w-[60%] {showPreview ? 'block' : 'hidden xl:block'} print:block print:w-full print:max-w-none print:m-0 print:p-0">
-			<div in:fade={{ duration: 200 }} class="space-y-6 xl:sticky xl:top-8 print:static print:block">
+		<div
+			class="w-full xl:w-1/2 {showPreview
+				? 'block'
+				: 'hidden xl:block'} print:m-0 print:block print:w-full print:max-w-none print:p-0"
+		>
+			<div
+				in:fade={{ duration: 200 }}
+				class="space-y-6 xl:sticky xl:top-8 print:static print:block"
+			>
 				<button
-					class="xl:hidden group flex cursor-pointer items-center gap-2 text-sm font-semibold text-cyan-400 transition hover:text-cyan-300"
+					class="group flex cursor-pointer items-center gap-2 text-sm font-semibold text-cyan-400 transition hover:text-cyan-300 xl:hidden"
 					onclick={() => (showPreview = false)}
 				>
 					<span class="transition-transform group-hover:-translate-x-1">&larr;</span>
@@ -180,6 +217,7 @@
 					{form}
 					{items}
 					{subtotal}
+					{discountAmount}
 					taxRate={validatedTaxRate}
 					{taxAmount}
 					{total}

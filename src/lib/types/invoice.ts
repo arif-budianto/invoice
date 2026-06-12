@@ -19,4 +19,8 @@ export type InvoiceFormData = {
 	clientEmail: string;
 	clientPhone: string;
 	clientAddress: string;
+	bankName: string;
+	bankAccount: string;
+	bankAccountName: string;
+	discount: number;
 };
