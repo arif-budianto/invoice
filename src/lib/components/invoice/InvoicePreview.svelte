@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import type { InvoiceFormData, InvoiceItem } from '$lib/types/invoice';
 
 	type Props = {
@@ -18,6 +19,13 @@
 	let isGeneratingPdf = $state(false);
 	let downloadError = $state<string | null>(null);
 	let previewWrapperWidth = $state(0);
+	let currentPageIndex = $state(0);
+	
+	$effect(() => {
+		if (currentPageIndex >= invoicePages.length && invoicePages.length > 0) {
+			currentPageIndex = invoicePages.length - 1;
+		}
+	});
 	
 	let scale = $derived(previewWrapperWidth > 0 && previewWrapperWidth < 820 ? previewWrapperWidth / 820 : 1);
 	const invoicePages = $derived.by(() => {
@@ -32,8 +40,8 @@
 
 		while (!hasFooter) {
 			let isFirst = pageIndex === 0;
-			let maxWithFooter = isFirst ? 7 : 10;
-			let maxNoFooter = isFirst ? 12 : 15;
+			let maxWithFooter = isFirst ? 5 : 8;
+			let maxNoFooter = isFirst ? 8 : 11;
 
 			if (remaining.length <= maxWithFooter) {
 				pages.push({ 
@@ -56,13 +64,20 @@
 		return pages;
 	});
 
-	let totalHeight = $derived(invoicePages.length * 1123 + Math.max(0, invoicePages.length - 1) * 32);
+	let totalHeight = $derived(
+		isGeneratingPdf 
+			? invoicePages.length * 1123 + Math.max(0, invoicePages.length - 1) * 32 
+			: 1123
+	);
 
 	async function handleDownloadPdf() {
 		if (typeof window === 'undefined') return;
 		
 		isGeneratingPdf = true;
 		downloadError = null;
+		
+		await tick();
+		await new Promise(r => setTimeout(r, 100)); // wait for DOM reflow
 
 		try {
 			const { toPng } = await import('html-to-image');
@@ -127,87 +142,160 @@
 		<p class="text-sm text-red-400 w-full text-center">{downloadError}</p>
 	{/if}
 
-	<div class="w-full max-w-[820px] mx-auto flex justify-center" bind:clientWidth={previewWrapperWidth}>
+	<div class="relative w-full max-w-[820px] mx-auto flex flex-col items-center" bind:clientWidth={previewWrapperWidth}>
+		<!-- Navigation Buttons (Desktop) -->
+		{#if invoicePages.length > 1 && !isGeneratingPdf}
+			<button
+				class="absolute left-[-20px] top-1/2 -translate-y-1/2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#1363a6] shadow-xl transition-all hover:scale-110 hover:bg-[#1363a6] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+				onclick={() => currentPageIndex = Math.max(0, currentPageIndex - 1)}
+				disabled={currentPageIndex === 0}
+				aria-label="Halaman Sebelumnya"
+			>
+				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path></svg>
+			</button>
+
+			<button
+				class="absolute right-[-20px] top-1/2 -translate-y-1/2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#1363a6] shadow-xl transition-all hover:scale-110 hover:bg-[#1363a6] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+				onclick={() => currentPageIndex = Math.min(invoicePages.length - 1, currentPageIndex + 1)}
+				disabled={currentPageIndex === invoicePages.length - 1}
+				aria-label="Halaman Selanjutnya"
+			>
+				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+			</button>
+		{/if}
+
 		<div 
-			id="invoice-pdf-container" 
-			class="flex flex-col gap-8 w-[794px] items-center"
-			style="transform: scale({scale}); transform-origin: top center; margin-bottom: {totalHeight * (scale - 1)}px;"
+			class="relative w-[794px] {isGeneratingPdf ? '' : 'overflow-hidden rounded-xl shadow-2xl'}"
+			style="transform: scale({scale}); transform-origin: top center; margin-bottom: {totalHeight * (scale - 1)}px; height: {totalHeight}px;"
 		>
-			{#each invoicePages as page (page.pageNumber)}
-				<div id="printable-page-{page.pageNumber}" class="bg-white p-14 text-slate-800 relative print:m-0 print:shadow-none print:overflow-visible shadow-2xl border border-slate-200 w-[794px] h-[1123px] shrink-0 flex flex-col font-sans box-border overflow-hidden print:break-after-page">
+			<div 
+				id="invoice-pdf-container" 
+				class="{isGeneratingPdf ? 'flex flex-col gap-8' : 'flex h-full transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]'}"
+				style="{isGeneratingPdf ? '' : `width: ${invoicePages.length * 100}%; transform: translateX(-${(currentPageIndex * 100) / invoicePages.length}%);`}"
+			>
+				{#each invoicePages as page (page.pageNumber)}
+					<div class="{isGeneratingPdf ? '' : 'shrink-0 flex justify-center'}" style="{isGeneratingPdf ? '' : `width: ${100 / invoicePages.length}%;`}">
+						<div id="printable-page-{page.pageNumber}" class="bg-white text-slate-800 relative print:m-0 print:shadow-none print:overflow-visible {isGeneratingPdf ? 'shadow-2xl' : ''} w-[794px] h-[1123px] shrink-0 flex flex-col font-sans box-border overflow-hidden print:break-after-page">
 					
 				{#if page.isFirst}
-					<div class="mb-12 shrink-0">
-						<h1 class="text-5xl font-black tracking-tight text-slate-900 mb-4 uppercase">INVOICE</h1>
-						<div class="text-sm text-slate-700 leading-snug space-y-0.5">
-							{#if form.fromName}<p>{form.fromName}</p>{/if}
-							{#if form.fromAddress}<p>{form.fromAddress}</p>{/if}
-							{#if form.fromPhone}<p>{form.fromPhone}</p>{/if}
-							{#if form.fromEmail}<p>{form.fromEmail}</p>{/if}
-						</div>
-					</div>
+					<!-- Top Banner -->
+					<div class="relative w-full h-[140px] bg-[#1363a6] flex items-center overflow-hidden shrink-0" style="-webkit-print-color-adjust: exact;">
+						<!-- Diagonal background stripes in blue area -->
+						<div class="absolute right-[20%] top-0 w-2 h-full bg-white/20 skew-x-[30deg]"></div>
+						<div class="absolute right-[18%] top-0 w-8 h-full bg-white/10 skew-x-[30deg]"></div>
+						
+						<!-- Black shape on the left -->
+						<div class="absolute left-[-50px] top-0 bottom-0 w-[55%] bg-[#0a0a0a] skew-x-[30deg] origin-top-left z-10"></div>
+						<!-- Thin blue border effect next to black -->
+						<div class="absolute left-[-45px] top-0 bottom-0 w-[55%] bg-[#3b82f6] skew-x-[30deg] origin-top-left z-0"></div>
 
-					<div class="flex flex-row justify-between items-start gap-0 mb-6 shrink-0">
-						<div class="w-1/2">
-							<p class="text-[11px] font-bold tracking-widest text-slate-500 uppercase mb-2">BILL TO</p>
-							<div class="text-sm text-slate-800 leading-snug space-y-0.5">
-								{#if form.clientName}<p>{form.clientName}</p>{/if}
-								{#if form.clientAddress}<p>{form.clientAddress}</p>{/if}
-								{#if form.clientPhone}<p>{form.clientPhone}</p>{/if}
-								{#if form.clientEmail}<p>{form.clientEmail}</p>{/if}
+						<!-- Left Content (over black) -->
+						<div class="relative z-20 w-[60%] pl-12 pr-4 flex flex-col justify-center">
+							<div class="flex flex-col justify-center">
+								<h1 class="text-[30px] font-black text-white leading-tight tracking-wide whitespace-nowrap">
+									<span class="text-[#3b82f6] text-[44px] italic mr-[1px]">{form.fromName ? form.fromName.charAt(0).toUpperCase() : 'C'}</span>{form.fromName ? form.fromName.slice(1) : 'OMPANY'}
+								</h1>
+								<p class="text-white/70 text-[12px] tracking-[0.3em] font-bold uppercase mt-1">COMPANY</p>
 							</div>
 						</div>
 
-						<div class="w-1/2">
-							<table class="text-sm text-right ml-auto">
+						<!-- Right Content (over blue) -->
+						<div class="relative z-20 w-[40%] pr-12 pl-4 flex flex-col justify-center items-end text-right">
+							<h2 class="text-4xl font-black text-white tracking-widest mb-3">INVOICE</h2>
+							<table class="text-[10px] text-white">
 								<tbody>
-									<tr>
-										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Invoice #:</td>
-										<td class="pb-1">{form.invoiceNumber || '-'}</td>
-									</tr>
-									<tr>
-										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Date:</td>
-										<td class="pb-1">{formatDate(form.issueDate)}</td>
-									</tr>
-									<tr>
-										<td class="font-bold text-slate-900 pr-3 pb-1 whitespace-nowrap">Due Date:</td>
-										<td class="pb-1">{formatDate(form.dueDate)}</td>
-									</tr>
+									<tr><td class="pr-6 pb-0.5 font-bold text-white/90">Nomor Invoice:</td><td class="pb-0.5 text-right">{form.invoiceNumber || '#123456'}</td></tr>
+									<tr><td class="pr-6 pb-0.5 font-bold text-white/90">Tanggal Invoice:</td><td class="pb-0.5 text-right">{form.issueDate ? formatDate(form.issueDate) : 'April 05, 2026'}</td></tr>
+									<tr><td class="pr-6 pb-0.5 font-bold text-white/90">Nomor Telepon:</td><td class="pb-0.5 text-right">{form.fromPhone || '+123 4567 8910'}</td></tr>
+									<tr><td class="pr-6 pb-0.5 font-bold text-white/90">Email:</td><td class="pb-0.5 text-right">{form.fromEmail || 'example@mail.com'}</td></tr>
 								</tbody>
 							</table>
 						</div>
 					</div>
+
+					<!-- Invoice To & Metode Pembayaran -->
+					<div class="px-12 pt-8 flex justify-between shrink-0">
+						<div class="w-1/2">
+							<h3 class="text-[#1363a6] font-bold text-[11px] tracking-wide mb-2 uppercase">DITAGIHKAN KEPADA:</h3>
+							<p class="text-[22px] font-bold text-slate-900 leading-none mb-2">{form.clientName || 'Nama Pelanggan'}</p>
+							<p class="text-[11px] text-slate-600 mb-3">{form.clientAddress || 'Alamat Pelanggan'}</p>
+							<p class="text-[11px] font-bold text-slate-800 mb-0.5">Telepon: <span class="font-normal text-slate-600 ml-1">{form.clientPhone || '+123 4567 8910'}</span></p>
+							<p class="text-[11px] font-bold text-slate-800">Email: <span class="font-normal text-slate-600 ml-1">{form.clientEmail || 'example@mail.com'}</span></p>
+						</div>
+						<div class="w-1/2 pl-12 pt-2">
+							<h3 class="text-[#1363a6] font-bold text-[14px] tracking-wide mb-3">Metode Pembayaran</h3>
+							<table class="text-[11px] text-slate-700 w-full">
+								<tbody>
+									<tr><td class="font-bold py-0.5 w-24 text-slate-800">No. Rekening:</td><td class="py-0.5">1234 5678 910</td></tr>
+									<tr><td class="font-bold py-0.5 text-slate-800">Atas Nama:</td><td class="py-0.5">Nama Pelanggan</td></tr>
+									<tr><td class="font-bold py-0.5 text-slate-800">Nama Bank:</td><td class="py-0.5">Nama Bank</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Dear Client -->
+					<div class="px-12 pt-8 shrink-0">
+						<p class="text-[12px] font-bold text-slate-900 mb-2">Yth. Pelanggan</p>
+						<p class="text-[11px] text-slate-600 leading-[1.6] text-justify">
+							Berikut adalah rincian tagihan atas produk/layanan yang telah kami berikan. Harap memeriksa rincian di bawah ini dengan saksama. Jika terdapat pertanyaan atau ketidaksesuaian, jangan ragu untuk menghubungi kami melalui kontak yang tertera di atas.
+						</p>
+					</div>
 				{/if}
 
 				{#if !page.isFirst}
-					<div class="flex justify-between items-end mb-6 pt-4 shrink-0">
-						<h2 class="text-2xl font-black text-slate-900 uppercase">INVOICE</h2>
-						<div class="text-right text-sm text-slate-700">
-							<p class="font-bold">{form.invoiceNumber || '-'}</p>
-							<p>{form.clientName || '-'}</p>
+					<div class="w-full h-[60px] bg-[#1363a6] shrink-0 mb-8 px-12 flex justify-between items-center text-white" style="-webkit-print-color-adjust: exact;">
+						<h2 class="text-xl font-black tracking-widest">INVOICE</h2>
+						<div class="text-right text-[11px]">
+							<p class="font-bold">{form.invoiceNumber || '#123456'}</p>
+							<p>{form.clientName || 'Nama Pelanggan'}</p>
 						</div>
 					</div>
 				{/if}
 
-				<div class="h-[2px] bg-slate-800 mb-6 w-full shrink-0" style="-webkit-print-color-adjust: exact;"></div>
-
-				<div class="mb-8 flex-grow">
-					<table class="w-full text-left border-collapse border border-slate-400">
-						<thead class="bg-slate-100 border-y border-slate-400" style="-webkit-print-color-adjust: exact;">
+				<!-- Table -->
+				<div class="px-12 pt-8 flex-grow">
+					<table class="w-full text-left border-collapse" style="-webkit-print-color-adjust: exact;">
+						<thead>
 							<tr>
-								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest w-[50%]">ITEM</th>
-								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-center w-[15%]">QTY</th>
-								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-center w-[15%]">PRICE</th>
-								<th class="py-3 px-4 text-[11px] font-bold text-slate-800 uppercase tracking-widest text-right w-[20%]">TOTAL</th>
+								<th class="w-[8%] p-0">
+									<div class="bg-[#1363a6] text-white py-2.5 text-center skew-x-[-25deg] ml-[-12px] mr-[2px]">
+										<span class="block skew-x-[25deg] text-[11px]">No.</span>
+									</div>
+								</th>
+								<th class="w-[42%] p-0">
+									<div class="bg-[#1363a6] text-white py-2.5 text-left pl-6 skew-x-[-25deg] mx-[2px]">
+										<span class="block skew-x-[25deg] text-[11px]">Deskripsi Produk</span>
+									</div>
+								</th>
+								<th class="w-[15%] p-0">
+									<div class="bg-[#1363a6] text-white py-2.5 text-center skew-x-[-25deg] mx-[2px]">
+										<span class="block skew-x-[25deg] text-[11px]">Harga</span>
+									</div>
+								</th>
+								<th class="w-[15%] p-0">
+									<div class="bg-[#1363a6] text-white py-2.5 text-center skew-x-[-25deg] mx-[2px]">
+										<span class="block skew-x-[25deg] text-[11px]">Jumlah</span>
+									</div>
+								</th>
+								<th class="w-[20%] p-0">
+									<div class="bg-[#1363a6] text-white py-2.5 text-center skew-x-[-25deg] ml-[2px] mr-[-12px]">
+										<span class="block skew-x-[25deg] text-[11px]">Total</span>
+									</div>
+								</th>
 							</tr>
 						</thead>
-						<tbody class="divide-y divide-slate-300 border-b border-slate-400">
-							{#each page.pageItems as item (item.id)}
-								<tr>
-									<td class="py-4 px-4 text-sm text-slate-800 pr-8 font-medium">{item.description || '-'}</td>
-									<td class="py-4 px-4 text-sm text-slate-800 text-center">{item.quantity}</td>
-									<td class="py-4 px-4 text-sm text-slate-800 text-center">{formatCurrency(item.unitPrice)}</td>
-									<td class="py-4 px-4 text-sm text-slate-800 text-right font-semibold">{formatCurrency(item.quantity * item.unitPrice)}</td>
+						<tbody>
+							{#each page.pageItems as item, idx (item.id)}
+								<tr class="border-b border-slate-200/60">
+									<td class="py-4 px-2 text-[11px] text-slate-500 text-center font-medium">{String((page.pageNumber-1)*15 + idx + 1).padStart(2, '0')}</td>
+									<td class="py-4 px-4">
+										<p class="text-[12px] font-bold text-slate-800">{item.description || '-'}</p>
+										<p class="text-[10px] text-slate-400 mt-1 italic leading-relaxed"></p>
+									</td>
+									<td class="py-4 px-2 text-[11px] text-slate-600 text-center font-medium">{formatCurrency(item.unitPrice)}</td>
+									<td class="py-4 px-2 text-[11px] text-slate-600 text-center font-medium">{item.quantity}</td>
+									<td class="py-4 px-2 text-[11px] text-slate-800 text-right pr-4 font-bold">{formatCurrency(item.quantity * item.unitPrice)}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -215,47 +303,80 @@
 				</div>
 
 				{#if page.isLast}
-					<div class="flex justify-end mb-12 shrink-0">
-						<div class="w-[45%]">
-							<div class="space-y-2 text-sm text-slate-600 px-4">
-								<div class="flex justify-between">
-									<span>Subtotal:</span>
-									<span class="font-bold text-slate-900">{formatCurrency(subtotal)}</span>
-								</div>
-								<div class="flex justify-between">
-									<span>Pajak ({taxRate}%):</span>
-									<span class="text-slate-900">{formatCurrency(taxAmount)}</span>
-								</div>
-								<div class="h-[2px] bg-slate-800 mt-3 mb-2" style="-webkit-print-color-adjust: exact;"></div>
-								<div class="flex justify-between items-center py-1">
-									<span class="text-base font-bold text-slate-900">Total:</span>
-									<span class="text-base font-bold text-slate-900">{formatCurrency(total)}</span>
-								</div>
-								<div class="h-[4px] bg-slate-800" style="-webkit-print-color-adjust: exact;"></div>
+					<!-- Summary Section -->
+					<div class="px-12 flex justify-between items-start mb-[140px] mt-4 shrink-0" style="-webkit-print-color-adjust: exact;">
+						<div class="w-[50%] pr-8">
+							<h3 class="text-[#1363a6] font-bold text-[12px] mb-2">Catatan:</h3>
+							<p class="text-[10px] text-slate-500 leading-relaxed text-justify whitespace-pre-wrap">{form.notes || 'Pembayaran harap dilakukan penuh sesuai nominal yang tertera pada invoice ini sebelum tanggal jatuh tempo.\n\nKeterlambatan pembayaran dapat dikenakan denda sesuai dengan kebijakan perusahaan. Terima kasih.'}</p>
+						</div>
+						
+						<div class="w-[45%] pl-4 pt-2">
+							<table class="w-full text-[11px] text-slate-700">
+								<tbody>
+									<tr>
+										<td class="py-1 text-right pr-12">Subtotal:</td>
+										<td class="py-1 text-right font-bold text-slate-900">{formatCurrency(subtotal)}</td>
+									</tr>
+									<tr>
+										<td class="py-1 text-right pr-12">Diskon:</td>
+										<td class="py-1 text-right font-bold text-slate-900">00.00</td>
+									</tr>
+									<tr>
+										<td class="py-1 text-right pr-12">Pajak ({taxRate}%):</td>
+										<td class="py-1 text-right font-bold text-slate-900">{formatCurrency(taxAmount)}</td>
+									</tr>
+								</tbody>
+							</table>
+							
+							<!-- Total Block -->
+							<div class="mt-4 bg-[#1363a6] text-white flex justify-between items-center py-3 pl-8 pr-4 relative">
+								<div class="absolute left-[-15px] top-0 bottom-0 w-8 bg-[#1363a6] skew-x-[-25deg]"></div>
+								<span class="font-bold relative z-10 text-[13px]">Total:</span>
+								<span class="font-bold relative z-10 text-[14px] tracking-wide">{formatCurrency(total)}</span>
 							</div>
 						</div>
 					</div>
 
-					<div class="mt-auto pt-8 shrink-0">
-						<p class="text-[11px] font-bold tracking-widest text-slate-500 uppercase mb-2">NOTES</p>
-						<p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{form.notes || 'Terima kasih atas kerja sama Anda.'}</p>
+					<!-- Footer -->
+					<div class="absolute bottom-0 left-0 w-full h-32 flex items-end justify-between overflow-hidden shrink-0" style="-webkit-print-color-adjust: exact;">
+						<!-- Bottom Left Slanted shape -->
+						<div class="absolute left-[-100px] bottom-0 w-[400px] h-10 bg-[#1363a6] skew-x-[45deg] origin-bottom-left"></div>
+						
+						<div class="relative z-10 pl-12 pb-10">
+
+						</div>
 					</div>
 				{/if}
 
 				{#if invoicePages.length > 1}
-					<div class="absolute bottom-6 left-0 w-full text-center text-[10px] text-slate-400 font-medium uppercase tracking-widest print:hidden">
+					<div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-[10px] text-slate-400 font-medium tracking-widest print:hidden">
 						Halaman {page.pageNumber} dari {invoicePages.length}
 					</div>
 				{/if}
 			</div>
+			</div>
 		{/each}
+		</div>
 	</div>
+	
+	<!-- Page Indicators -->
+	{#if invoicePages.length > 1 && !isGeneratingPdf}
+		<div class="flex gap-2 justify-center w-full relative z-10 pt-2">
+			{#each invoicePages as page (page.pageNumber)}
+				<button 
+					class="h-2 rounded-full transition-all duration-300 {currentPageIndex === (page.pageNumber - 1) ? 'w-6 bg-[#1363a6]' : 'w-2 bg-slate-300 hover:bg-slate-400'}"
+					onclick={() => currentPageIndex = (page.pageNumber - 1)}
+					aria-label="Ke halaman {page.pageNumber}"
+				></button>
+			{/each}
+		</div>
+	{/if}
 	</div>
 
 	<div class="mt-4 flex w-full max-w-[794px] flex-col print:hidden px-4 sm:px-0">
 		<button
 			disabled={isGeneratingPdf}
-			class="w-full cursor-pointer flex items-center justify-center gap-2 rounded-[24px] bg-cyan-500 hover:bg-cyan-400 p-4 text-center text-[16px] font-extrabold text-slate-900 shadow-[0_0_30px_rgba(34,211,238,0.3)] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-wait"
+			class="w-full cursor-pointer flex items-center justify-center gap-2 rounded-[24px] bg-[#1363a6] hover:bg-[#1e40af] p-4 text-center text-[16px] font-extrabold text-white shadow-[0_0_30px_rgba(19,99,166,0.3)] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-wait"
 			onclick={handleDownloadPdf}
 		>
 			<svg class="w-5 h-5 {isGeneratingPdf ? 'animate-bounce' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
