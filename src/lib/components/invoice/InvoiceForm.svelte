@@ -346,6 +346,24 @@
 				<DatePicker bind:value={form.dueDate} align="right" />
 			</label>
 		</div>
+
+		<div class="space-y-5 border-t border-white/5 pt-6">
+			<h3 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Metode Pembayaran</h3>
+			<div class="grid gap-5 sm:grid-cols-3">
+				<label class="space-y-2">
+					<span class="text-sm font-medium text-slate-300">Nama Bank</span>
+					<input bind:value={form.paymentBankName} class="field" placeholder="BCA" />
+				</label>
+				<label class="space-y-2">
+					<span class="text-sm font-medium text-slate-300">Nomor Rekening</span>
+					<input bind:value={form.paymentAccountNumber} class="field" placeholder="1234 5678 910" />
+				</label>
+				<label class="space-y-2">
+					<span class="text-sm font-medium text-slate-300">Atas Nama</span>
+					<input bind:value={form.paymentAccountHolder} class="field" placeholder="Studio Arunika" />
+				</label>
+			</div>
+		</div>
 	</section>
 
 	<section class="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur sm:p-8 space-y-6">
