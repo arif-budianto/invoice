@@ -1,21 +1,71 @@
-MIT License
+PROPRIETARY LICENSE
+Copyright (c) 2026 Arif Budianto. All rights reserved.
 
-Copyright (c) 2026 Arif Budianto
+NOTICE
+This software, its source code, documentation, assets, and all associated
+files (collectively, the "Software") are proprietary and confidential.
+They are the exclusive property of the copyright holder identified above.
+The Software is NOT open source and is NOT licensed for public use.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. NO LICENSE GRANTED
+No license, right, title, or interest in or to the Software is granted to
+any person or entity by the availability of this repository, by access to
+the source code, or by any other means. All rights not expressly granted
+are reserved by the copyright holder.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. PROHIBITED ACTIVITIES
+Without prior written permission from the copyright holder, no person or
+entity may:
+  a. use, run, or deploy the Software, in whole or in part;
+  b. copy, reproduce, or duplicate the Software;
+  c. modify, adapt, translate, or create derivative works based on the
+     Software;
+  d. merge the Software with any other software;
+  e. publish, post, upload, transmit, or otherwise distribute the Software;
+  f. sublicense, rent, lease, lend, sell, resell, or otherwise transfer the
+     Software or any rights to it;
+  g. remove, obscure, or alter any copyright, trademark, or proprietary
+     notice contained in the Software;
+  h. claim authorship, ownership, or any proprietary interest in the
+     Software, or represent the Software as their own work or product.
 
+3. NO CLAIM OF OWNERSHIP
+The Software may not be presented, redistributed, or republished in a way
+that implies ownership, authorship, or endorsement by anyone other than the
+copyright holder. Forking, mirroring, or re-uploading this repository does
+not transfer any rights and does not make the Software the property of the
+person or entity performing such action.
+
+4. THIRD-PARTY COMPONENTS
+The Software may include or depend on third-party components distributed
+under their own licenses. Those components remain subject to their
+respective licenses, and nothing in this license restricts rights granted
+to you directly by those licenses.
+
+5. CONTRIBUTIONS
+Any contribution submitted to this project becomes the property of the
+copyright holder unless otherwise agreed in writing. Submitting a
+contribution does not grant the contributor any ownership or license over
+the Software.
+
+6. TERMINATION
+Any breach of this license automatically and immediately terminates all
+rights granted hereunder, if any, and requires the immediate destruction of
+all copies of the Software in the possession or control of the breaching
+party.
+
+7. NO WARRANTY
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. THE COPYRIGHT HOLDER
+MAKES NO REPRESENTATION REGARDING THE ACCURACY, RELIABILITY, OR COMPLETENESS
+OF THE SOFTWARE.
+
+8. LIMITATION OF LIABILITY
+IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For licensing, commercial, or permission requests, contact the copyright
+holder: Arif Budianto <tigers@fedoraweb.site>.
