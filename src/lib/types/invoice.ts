@@ -11,6 +11,9 @@ export type InvoiceFormData = {
 	dueDate: string;
 	currency: string;
 	notes: string;
+	paymentBankName: string;
+	paymentAccountNumber: string;
+	paymentAccountHolder: string;
 	fromName: string;
 	fromEmail: string;
 	fromPhone: string;
