@@ -100,6 +100,24 @@
 		</label>
 	</div>
 
+	<div class="space-y-4">
+		<h2 class="text-sm font-semibold tracking-[0.22em] text-slate-400 uppercase">Metode pembayaran</h2>
+		<div class="grid gap-4 sm:grid-cols-3">
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">Nama bank</span>
+				<input bind:value={form.paymentBankName} class="field" placeholder="BCA" />
+			</label>
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">Nomor rekening</span>
+				<input bind:value={form.paymentAccountNumber} class="field" placeholder="1234 5678 910" />
+			</label>
+			<label class="space-y-2">
+				<span class="text-sm font-medium text-slate-200">Atas nama</span>
+				<input bind:value={form.paymentAccountHolder} class="field" placeholder="Studio Arunika" />
+			</label>
+		</div>
+	</div>
+
 	<div class="grid gap-8 xl:grid-cols-2">
 		<div class="space-y-4">
 			<div class="space-y-1">
